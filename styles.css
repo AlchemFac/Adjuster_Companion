@@ -68,3 +68,14 @@ footer { padding: 0 4px 28px; }
 .followup-controls form label:first-child { flex: 1 1 160px; }
 .followup-controls select { margin-bottom: 0; }
 .followup-controls > label { flex: 1 1 180px; }
+
+.documentation-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; width: 100%; }
+.documentation-fields label:last-child { grid-column: 1 / -1; }
+.documentation-fields textarea { margin-bottom: 0; }
+#documentation-form { display: block; }
+#documentation-form[hidden], #doc-date-label[hidden] { display: none; }
+.date-toggle { display: flex; align-items: center; gap: 8px; margin: 18px 0; }
+.date-toggle input { width: auto; margin: 0; accent-color: #315e4c; }
+#doc-date-label { max-width: 260px; margin-bottom: 18px; }
+#clear-documentation { background: white; color: #315e4c; }
+@media (max-width: 560px) { .documentation-fields { grid-template-columns: 1fr; } }

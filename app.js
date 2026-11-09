@@ -2,11 +2,6 @@
 
 const STORAGE_KEY = 'claims-companion.tasks.v1';
 const MAX_TASKS = 500;
-const templates = {
-  daily: 'DAILY LEARNING PLAN\n\nLearning goal: [generic topic]\nTraining material to review: [topic]\nPractice activity: [fictional exercise]\nQuestions for a mentor: [generic questions]\nNext learning step: [action]',
-  followup: 'GENERIC FOLLOW-UP CHECKLIST\n\n[ ] Review the training checklist\n[ ] Identify the next generic action\n[ ] Review approved learning materials\n[ ] Prepare a generic question for a mentor\n[ ] Set a follow-up date\n\nUse fictional exercises only.',
-  practice: 'PRACTICE DOCUMENTATION OUTLINE\n\nExercise: [fictional training label]\nPurpose: [generic learning objective]\nChecklist reviewed: [training topic]\nLearning takeaway: [generic observation]\nNext practice step: [action]\n\nDo not include real customer or case information.'
-};
 const $ = (selector) => document.querySelector(selector);
 let tasks = [];
 let filter = 'all';
@@ -297,17 +292,6 @@ document.querySelectorAll('[data-filter]').forEach(button => button.addEventList
   document.querySelectorAll('[data-filter]').forEach(b => b.setAttribute('aria-pressed', String(b === button)));
   render();
 }));
-function showTemplate() { $('#template-preview').value = templates[$('#template-select').value]; $('#copy-status').textContent = ''; }
-$('#template-select').addEventListener('change', showTemplate);
-$('#copy-template').addEventListener('click', async () => {
-  try {
-    await navigator.clipboard.writeText($('#template-preview').value);
-    $('#copy-status').textContent = 'Template copied.';
-  } catch {
-    $('#template-preview').focus(); $('#template-preview').select();
-    $('#copy-status').textContent = 'Automatic copying is unavailable. The template is selected; use your browser’s Copy command.';
-  }
-});
 $('#clear-data').addEventListener('click', () => {
   if (!confirm('Delete all tasks saved by Claims Companion in this browser? This cannot be undone.')) return;
   try {
@@ -332,4 +316,4 @@ let renderedDay = today();
 setInterval(() => {
   if (today() !== renderedDay) { renderedDay = today(); render(); }
 }, 60000);
-loadTasks(); render(); showTemplate();
+loadTasks(); render();

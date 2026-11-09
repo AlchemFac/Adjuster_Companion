@@ -6,6 +6,7 @@
   <title>Claims Companion</title>
   <link rel="stylesheet" href="styles.css">
   <script src="app.js" defer></script>
+  <script src="documentation.js" defer></script>
 </head>
 <body>
   <header><span class="eyebrow">PERSONAL WORKSPACE</span><h1>Claims Companion</h1><p>A little structure for your learning day.</p></header>
@@ -53,9 +54,20 @@
       <div class="followup-group" aria-labelledby="followup-waiting-title"><h3 id="followup-waiting-title">Waiting</h3><ul id="followup-waiting"></ul></div>
     </section>
     <section class="card" aria-labelledby="templates-title">
-      <span class="eyebrow">MAKE A START</span><h2 id="templates-title">Documentation templates</h2><p class="muted">Copy a generic outline for a learning exercise. Do not add real case details here.</p>
-      <label>Template <select id="template-select"><option value="daily">Daily learning plan</option><option value="followup">Generic follow-up checklist</option><option value="practice">Practice documentation outline</option></select></label>
-      <label>Preview <textarea id="template-preview" rows="9" readonly></textarea></label><button id="copy-template" type="button">Copy template</button><p id="copy-status" role="status"></p>
+      <span class="eyebrow">MAKE A START</span><h2 id="templates-title">Documentation Assistant</h2>
+      <p class="notice" id="documentation-warning"><strong>Fictional practice only.</strong> Do not enter real claim or customer information without employer approval. Never include names, claim or policy numbers, accident facts, or other confidential details here. This tool only formats what you type; it does not make coverage, liability, settlement, or payment decisions.</p>
+      <p class="muted" id="documentation-help">Drafts are not saved or sent anywhere. Changing templates, clearing the form, or leaving this page clears the draft. Review the preview before copying. Copying places text on your system clipboard.</p>
+      <label>Template <select id="template-select">
+        <optgroup label="Documentation"><option value="customer-contact">Customer contact</option><option value="contact-attempt">Contact attempt</option><option value="investigation-update">Investigation update</option><option value="repair-followup">Repair estimate follow-up</option><option value="general-followup">General follow-up</option></optgroup>
+        <optgroup label="Learning outlines"><option value="daily">Daily learning plan</option><option value="followup">Generic follow-up checklist</option><option value="practice">Practice documentation outline</option></optgroup>
+      </select></label>
+      <form id="documentation-form" autocomplete="off" aria-describedby="documentation-warning documentation-help">
+        <div id="documentation-fields" class="documentation-fields"></div>
+        <label class="date-toggle"><input id="include-doc-date" type="checkbox"> Include a follow-up date</label>
+        <label id="doc-date-label" hidden>Follow-up date <input id="doc-date" type="date"></label>
+      </form>
+      <label>Formatted text preview <textarea id="template-preview" rows="14" readonly autocomplete="off" spellcheck="false"></textarea></label>
+      <div class="form-actions"><button id="copy-template" type="button">Copy to Clipboard</button><button id="clear-documentation" type="button">Clear Form</button></div><p id="copy-status" role="status"></p>
     </section>
     <footer><p>Tasks stay in this browser profile on this site. No sync or backup; clearing browser data removes them. Other people using this profile may see them.</p><button id="clear-data" type="button" class="danger">Delete all saved tasks</button></footer>
   </main>
