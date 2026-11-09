@@ -9,10 +9,12 @@
   <script src="app.js" defer></script>
   <script src="checklist.js" defer></script>
   <script src="documentation.js" defer></script>
+  <script src="template-library-data.js" defer></script>
+  <script src="template-library.js" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#tasks-title">Skip to workload</a>
-  <header><span class="eyebrow">PERSONAL WORKSPACE</span><h1>Claims Companion</h1><p>A little structure for your learning day.</p><nav aria-label="Sections"><a href="#tasks-title">Workload</a><a href="#followups-title">Follow-ups</a><a href="#day-one-title">Day 1 checklist</a><a href="#templates-title">Documentation</a><a href="#backup-title">Backup</a></nav></header>
+  <header><span class="eyebrow">PERSONAL WORKSPACE</span><h1>Claims Companion</h1><p>A little structure for your learning day.</p><nav aria-label="Sections"><a href="#tasks-title">Workload</a><a href="#followups-title">Follow-ups</a><a href="#day-one-title">Day 1 checklist</a><a href="#library-title">Template library</a><a href="#templates-title">Note formatter</a><a href="#backup-title">Backup</a></nav></header>
   <main>
     <aside class="notice"><strong>Generic work only.</strong> Use fictional labels and generic tasks. Never enter customer names, claim or policy numbers, accident facts, or other confidential information. This independent tool has no connection to an insurer or its systems.</aside>
     <p id="storage-status" role="status"></p>
@@ -69,8 +71,44 @@
       <p id="day-one-progress" role="status"></p><p id="day-one-feedback" role="status"></p>
       <div id="day-one-list" class="day-one-list" tabindex="0" role="region" aria-label="Day 1 checklist steps"></div>
     </section>
+    <section class="card library-card" aria-labelledby="library-title">
+      <span class="eyebrow">REUSABLE WORDING</span><h2 id="library-title" tabindex="-1">Documentation Templates</h2>
+      <p class="notice" id="library-warning"><strong>Placeholders only.</strong> Fill private details in your employer’s approved system after copying. Verify every action, contact, determination and placeholder against employer-approved documentation standards. These templates do not make insurance decisions, supply facts, or submit notes anywhere.</p>
+      <p id="library-storage-status" role="status"></p>
+      <div class="library-layout">
+        <div class="library-navigation">
+          <label>Search templates <input id="library-search" type="search" maxlength="200" placeholder="Name or keyword" autocomplete="off"></label>
+          <label>Category <select id="library-category"><option value="">All categories</option></select></label>
+          <label class="date-toggle"><input id="library-favorites-only" type="checkbox"> Favorites only</label>
+          <button id="library-new" type="button">New generic template</button>
+          <h3>Recently Used</h3><p class="muted">Templates successfully copied here; only IDs are recorded.</p>
+          <ul id="library-recent" aria-label="Recently used templates"></ul>
+          <p id="library-count" role="status"></p>
+          <ul id="library-list" tabindex="0" aria-label="Template library"></ul>
+        </div>
+        <div class="library-content">
+          <p id="library-selected-category" class="eyebrow"></p>
+          <h3 id="library-selected-title" tabindex="-1"></h3><p id="library-description"></p>
+          <label>Template preview (copy placeholders as shown)<textarea id="library-preview" rows="20" readonly autocomplete="off" spellcheck="false"></textarea></label>
+          <div class="form-actions"><button id="library-copy" type="button">Copy Template</button><button id="library-favorite" type="button" aria-pressed="false">Add to favorites</button><button id="library-duplicate" type="button">Duplicate template</button><button id="library-edit" type="button" hidden>Edit custom template</button><button id="library-delete" type="button" class="danger" hidden>Delete custom template</button></div>
+          <p id="library-feedback" role="status"></p>
+          <form id="library-custom-form" hidden autocomplete="off" aria-describedby="library-custom-warning">
+            <h3 id="library-editor-title">New generic template</h3>
+            <p id="library-custom-warning" class="notice">Only reusable wording and bracketed placeholders belong here. Saved definitions persist in this browser. Never save completed notes, names, contact details, identifiers, accident facts, or proprietary employer procedures. Checks catch some common patterns but cannot identify all confidential information.</p>
+            <label>Generic template title<input id="library-custom-title" required maxlength="100" autocomplete="off"></label>
+            <label>Template category<select id="library-custom-category"></select></label>
+            <label>When to use this template<textarea id="library-custom-description" required maxlength="300" rows="2" autocomplete="off" spellcheck="false"></textarea></label>
+            <label>Generic template body<textarea id="library-custom-body" required maxlength="6000" rows="12" placeholder="Purpose: [PURPOSE]&#10;Action taken: [ACTION TAKEN]&#10;Next action: [NEXT ACTION]" autocomplete="off" spellcheck="false"></textarea></label>
+            <p class="muted">Use at least two distinct bracketed placeholders, such as [DATE], [PARTY] and [ACTION TAKEN]. Complete them later in the approved system.</p>
+            <label class="date-toggle"><input id="library-custom-confirm" type="checkbox" required> I confirm this is generic reusable wording with placeholders, not a completed note or confidential material.</label>
+            <div class="form-actions"><button type="submit">Save generic template</button><button id="library-custom-cancel" type="button">Cancel</button></div>
+            <p id="library-custom-status" role="status"></p>
+          </form>
+        </div>
+      </div>
+    </section>
     <section class="card" aria-labelledby="templates-title">
-      <span class="eyebrow">MAKE A START</span><h2 id="templates-title" tabindex="-1">Documentation Assistant</h2>
+      <span class="eyebrow">MAKE A START</span><h2 id="templates-title" tabindex="-1">Documentation Assistant · practice note formatter</h2>
       <p class="notice" id="documentation-warning"><strong>Fictional practice only.</strong> Do not enter real claim or customer information without employer approval. Never include names, claim or policy numbers, accident facts, or other confidential details here. This tool only formats what you type; it does not make coverage, liability, settlement, or payment decisions.</p>
       <p class="muted" id="documentation-help">Drafts are not saved or sent anywhere. Changing templates, clearing the form, or leaving this page clears the draft. Review the preview before copying. Copying places text on your system clipboard.</p>
       <label>Template <select id="template-select">

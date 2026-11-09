@@ -122,3 +122,28 @@ input, select, textarea { min-width: 0; }
 .day-one-step small { display: block; margin: 8px 0 8px 30px; }
 .day-one-step button { margin-left: 30px; background: white; color: #315e4c; }
 #day-one-form select { margin-bottom: 0; }
+
+.library-card { grid-column: 1 / -1; }
+.library-layout { display: grid; grid-template-columns: minmax(240px, 1fr) minmax(0, 2fr); gap: 24px; }
+.library-navigation, .library-content { min-width: 0; }
+.library-navigation { border-right: 1px solid #dce3da; padding-right: 20px; }
+#library-list { max-height: 34rem; overflow-y: auto; scrollbar-gutter: stable; }
+.library-item { display: flex; gap: 6px; margin-bottom: 8px; align-items: stretch; }
+.library-item button { background: white; color: #315e4c; border-color: #b5c6ba; }
+.library-choose { flex: 1; text-align: left; min-width: 0; padding: 10px; overflow-wrap: anywhere; }
+.library-choose[aria-pressed="true"] { background: #e7eee2; border-color: #315e4c; }
+.library-choose small { display: block; font-size: .75rem; font-weight: 400; margin-top: 5px; }
+.library-star { padding: 8px; font-size: 1.3rem; }
+#library-recent button { background: transparent; color: #315e4c; border-color: #dce3da; text-align: left; margin-bottom: 6px; padding: 7px; overflow-wrap: anywhere; }
+#library-preview { font-weight: 400; }
+#library-selected-title, #library-description { overflow-wrap: anywhere; }
+#library-favorite, #library-duplicate, #library-edit { background: white; color: #315e4c; }
+#library-custom-form { display: block; border-top: 1px solid #dce3da; padding-top: 18px; margin-top: 24px; }
+#library-custom-form label { margin-top: 12px; }
+#library-custom-form[hidden], #library-edit[hidden], #library-delete[hidden] { display: none; }
+#library-storage-status:not(:empty) { padding: 12px; background: #fff0d6; color: #70450b; }
+@media (max-width: 760px) {
+  .library-layout { grid-template-columns: 1fr; }
+  .library-navigation { border-right: 0; border-bottom: 1px solid #dce3da; padding-right: 0; padding-bottom: 20px; }
+  #library-list { max-height: 22rem; }
+}
