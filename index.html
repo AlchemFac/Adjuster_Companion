@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Claims Companion</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <header><span class="eyebrow">PERSONAL WORKSPACE</span><h1>Claims Companion</h1><p>A little structure for your learning day.</p></header>
+  <main>
+    <aside class="notice"><strong>Generic work only.</strong> Use fictional labels and generic tasks. Never enter customer names, claim or policy numbers, accident facts, or other confidential information. This independent tool has no connection to an insurer or its systems.</aside>
+    <p id="storage-status" role="status"></p>
+    <section class="card" aria-labelledby="tasks-title">
+      <div class="section-heading"><div><span class="eyebrow">KEEP THINGS MOVING</span><h2 id="tasks-title">Tasks & follow-ups</h2></div><p id="task-count"></p></div>
+      <form id="task-form">
+        <label>Generic task <input id="task-title" required maxlength="120" placeholder="For example: Review training checklist" autocomplete="off"></label>
+        <label>Follow-up date (optional) <input id="task-date" type="date"></label>
+        <button type="submit">Add task</button>
+      </form>
+      <div class="filters" role="group" aria-label="Filter tasks"><button type="button" data-filter="all" aria-pressed="true">All</button><button type="button" data-filter="open" aria-pressed="false">Open</button><button type="button" data-filter="due" aria-pressed="false">Due</button><button type="button" data-filter="done" aria-pressed="false">Completed</button></div>
+      <ul id="task-list"></ul><p id="empty-tasks" class="muted">A clear slate. Add a generic task to get started.</p>
+    </section>
+    <section class="card" aria-labelledby="templates-title">
+      <span class="eyebrow">MAKE A START</span><h2 id="templates-title">Documentation templates</h2><p class="muted">Copy a generic outline for a learning exercise. Do not add real case details here.</p>
+      <label>Template <select id="template-select"><option value="daily">Daily learning plan</option><option value="followup">Generic follow-up checklist</option><option value="practice">Practice documentation outline</option></select></label>
+      <label>Preview <textarea id="template-preview" rows="9" readonly></textarea></label><button id="copy-template" type="button">Copy template</button><p id="copy-status" role="status"></p>
+    </section>
+    <footer><p>Tasks stay in this browser profile on this site. No sync or backup; clearing browser data removes them. Other people using this profile may see them.</p><button id="clear-data" type="button" class="danger">Delete all saved tasks</button></footer>
+  </main>
+</body>
+</html>
