@@ -38,6 +38,16 @@ The list sorts active overdue tasks first, then today's tasks, upcoming tasks, u
 
 Existing records keep their IDs and original storage key, with defaults for new fields. Editing updates the existing record instead of making a copy. Completion dates are stored as local calendar days. Keep one editing tab open; no background notifications or confidential-content detection are provided.
 
+## Follow-up tracking
+
+Every task's due date is also its follow-up date: one record, one shared date. Assign it when adding or editing a task, or change it with the date field and Save date in Follow-up tracking. Clearing the date leaves the task available in Workload Management. Overdue dates never change automatically.
+
+Incomplete dated tasks appear in Overdue, Due Today, or Upcoming. Tasks with Waiting status appear only in Waiting, even when overdue; an overdue waiting task is highlighted and still counts toward the dashboard's overdue follow-ups. Undated Waiting tasks are shown too. Other undated tasks remain in Workload Management. Completed tasks are excluded from follow-up groups and counts, and remain accessible through the workload Completed filter. Complete in either view updates the same task; reopen in Workload Management if needed.
+
+Waiting-on categories are generic labels only: Customer, Repair Shop, Internal Review, Other Insurer, Other (or Not specified). Selecting a category does not change a task's status or date. Do not enter identities or confidential details.
+
+Dates are stored and compared as YYYY-MM-DD calendar dates using the browser's local day, without UTC conversion for grouping. Counts refresh on window focus and at the next minute check after midnight. The visible end-of-day reminder asks you to verify required follow-ups in your employer's official system; it is not a notification or a record of that verification. No email, SMS, push, or integrations are used.
+
 ## Checks
 
 ```sh
@@ -49,3 +59,5 @@ In the browser, add `Review training checklist` with yesterday's date; verify it
 Additional workload checks: create tasks dated yesterday, today, and tomorrow in a different order; verify chronological groups and the four summary counts. Edit every field and reload; verify one updated record remains. Combine priority/status filters with a search and check both matches and empty results. Mark a task complete and reopen it; check counts before and after reload. Cancel an edit and verify the original stays unchanged. Repeat with fictional labels only.
 
 There is no build step or package installation. Notifications, accounts, and backup/import are outside this scope.
+
+Follow-up checks: create generic tasks dated yesterday, today, and tomorrow; verify groups and dashboard counts. Set a task to Waiting, choose a waiting-on category, and verify it appears once in Waiting while still counting if overdue. Save a new follow-up date and verify the workload date changes without a new task. Complete it and verify it leaves follow-ups after reload. Confirm overdue dates are unchanged when reopening the app.

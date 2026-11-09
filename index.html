@@ -19,13 +19,16 @@
         <div><strong id="today-count">0</strong><span>Due today</span></div>
         <div><strong id="overdue-count">0</strong><span>Overdue</span></div>
         <div><strong id="completed-count">0</strong><span>Completed today</span></div>
+        <div><strong id="followup-overdue-count">0</strong><span>Overdue follow-ups</span></div>
+        <div><strong id="followup-today-count">0</strong><span>Follow-ups due today</span></div>
       </div>
       <form id="task-form">
         <label class="wide">Generic task <input id="task-title" required maxlength="120" placeholder="For example: Review training checklist" autocomplete="off"></label>
         <label>Category <select id="task-category"><option>Training</option><option>Follow-up</option><option>Documentation</option><option>Planning</option><option>Other</option></select></label>
         <label>Priority <select id="task-priority"><option>High</option><option selected>Medium</option><option>Low</option></select></label>
-        <label>Due date (optional) <input id="task-date" type="date"></label>
+        <label>Due / follow-up date (optional) <input id="task-date" type="date"></label>
         <label>Status <select id="task-status"><option>Not Started</option><option>In Progress</option><option>Waiting</option><option>Completed</option></select></label>
+        <label>Waiting on (optional, category only) <select id="task-waiting-on"><option value="">Not specified</option><option>Customer</option><option>Repair Shop</option><option>Internal Review</option><option>Other Insurer</option><option>Other</option></select></label>
         <label class="wide">Generic next action (optional) <input id="task-next-action" maxlength="200" placeholder="For example: Review the practice outline" autocomplete="off"></label>
         <div class="form-actions"><button id="save-task" type="submit">Add task</button><button id="cancel-edit" type="button" hidden>Cancel edit</button></div>
       </form>
@@ -38,6 +41,16 @@
       </div>
       <p class="muted">Active tasks appear first: overdue, due today, then upcoming. Undated and completed tasks follow. Counts include all tasks, regardless of filters.</p>
       <ul id="task-list"></ul><p id="empty-tasks" class="muted">A clear slate. Add a generic task to get started.</p>
+    </section>
+    <section class="card" aria-labelledby="followups-title">
+      <span class="eyebrow">CLOSE THE LOOP</span><h2 id="followups-title" tabindex="-1">Follow-up tracking</h2>
+      <p class="muted">Follow-ups use the same task and due date as Workload Management. Change either date to update both. Waiting tasks appear only under Waiting; their dates still count toward overdue and due-today totals. Completed tasks remain in Workload Management.</p>
+      <p class="notice"><strong>End-of-day reminder:</strong> Before finishing your day, verify that required follow-ups have been recorded in your employer’s official system. This personal checklist does not replace that system.</p>
+      <p id="followup-feedback" role="status"></p>
+      <div class="followup-group" aria-labelledby="followup-overdue-title"><h3 id="followup-overdue-title">Overdue</h3><ul id="followup-overdue"></ul></div>
+      <div class="followup-group" aria-labelledby="followup-today-title"><h3 id="followup-today-title">Due Today</h3><ul id="followup-today"></ul></div>
+      <div class="followup-group" aria-labelledby="followup-upcoming-title"><h3 id="followup-upcoming-title">Upcoming</h3><ul id="followup-upcoming"></ul></div>
+      <div class="followup-group" aria-labelledby="followup-waiting-title"><h3 id="followup-waiting-title">Waiting</h3><ul id="followup-waiting"></ul></div>
     </section>
     <section class="card" aria-labelledby="templates-title">
       <span class="eyebrow">MAKE A START</span><h2 id="templates-title">Documentation templates</h2><p class="muted">Copy a generic outline for a learning exercise. Do not add real case details here.</p>

@@ -35,7 +35,7 @@ ul { padding: 0; list-style: none; }
 footer { padding: 0 4px 28px; }
 @media (max-width: 560px) { header, main { padding-left: 16px; padding-right: 16px; } .card { padding: 18px; } .section-heading { display: block; } form label { width: 100%; } .task button { padding: 8px; } }
 
-.summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+.summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
 .summary div { background: #f3f5f0; border-radius: 8px; padding: 14px; }
 .summary strong { display: block; font-size: 1.7rem; }
 .summary span { font-size: .8rem; }
@@ -58,3 +58,13 @@ footer { padding: 0 4px 28px; }
   .task-actions select { width: auto; flex: 1; }
 }
 @media (max-width: 400px) { #task-form { grid-template-columns: 1fr; } }
+
+.followup-group h3 { border-bottom: 1px solid #dce3da; padding-bottom: 10px; margin-top: 28px; }
+.followup-row { padding: 16px; margin: 12px 0; border: 1px solid #dce3da; border-radius: 8px; }
+.followup-row.is-overdue { border-left: 5px solid #a34229; background: #fff5ee; }
+.followup-row p { margin: 8px 0; overflow-wrap: anywhere; }
+.followup-controls { display: flex; gap: 12px; align-items: end; flex-wrap: wrap; }
+.followup-controls form { flex: 1 1 300px; }
+.followup-controls form label:first-child { flex: 1 1 160px; }
+.followup-controls select { margin-bottom: 0; }
+.followup-controls > label { flex: 1 1 180px; }

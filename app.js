@@ -13,6 +13,7 @@ let filter = 'all';
 let editingId = null;
 const PRIORITIES = ['High', 'Medium', 'Low'];
 const STATUSES = ['Not Started', 'In Progress', 'Waiting', 'Completed'];
+const WAITING_ON = ['', 'Customer', 'Repair Shop', 'Internal Review', 'Other Insurer', 'Other'];
 const CATEGORIES = ['Training', 'Follow-up', 'Documentation', 'Planning', 'Other'];
 let persistenceEnabled = true;
 
@@ -26,6 +27,7 @@ function validTask(task) {
   return task && typeof task.id === 'string' && task.id.length > 0 && task.id.length <= 100 &&
     typeof task.title === 'string' && task.title.trim().length > 0 && task.title.length <= 120 &&
     typeof task.done === 'boolean' && typeof task.date === 'string' && validDate(task.date) &&
+    (task.waitingOn === undefined || WAITING_ON.includes(task.waitingOn)) &&
     (task.category === undefined || CATEGORIES.includes(task.category)) &&
     (task.priority === undefined || PRIORITIES.includes(task.priority)) &&
     (task.status === undefined || (STATUSES.includes(task.status) && task.done === (task.status === 'Completed'))) &&
@@ -42,7 +44,7 @@ function loadTasks() {
     // Legacy completed tasks have no known completion day and are not counted as today.
     tasks = data.map(task => ({ ...task, category: task.category ?? 'Training',
       priority: task.priority ?? 'Medium', status: task.status ?? (task.done ? 'Completed' : 'Not Started'),
-      nextAction: task.nextAction ?? '', completedOn: task.done ? (task.completedOn ?? '') : '' }));
+      nextAction: task.nextAction ?? '', waitingOn: task.waitingOn ?? '', completedOn: task.done ? (task.completedOn ?? '') : '' }));
   } catch {
     persistenceEnabled = false;
     $('#storage-status').textContent = 'Saved tasks could not be read. Existing storage has been left untouched. New tasks are temporary until you delete saved tasks below or resolve browser storage access.';
@@ -82,6 +84,7 @@ function editTask(task) {
   $('#task-priority').value = task.priority;
   $('#task-date').value = task.date;
   $('#task-status').value = task.status;
+  $('#task-waiting-on').value = task.waitingOn;
   $('#task-next-action').value = task.nextAction;
   $('#save-task').textContent = 'Save changes';
   $('#cancel-edit').hidden = false;
@@ -122,7 +125,7 @@ function render() {
     label.htmlFor = check.id;
     label.textContent = task.title;
     const meta = document.createElement('small');
-    meta.textContent = `${task.category} · ${task.priority} priority`;
+    meta.textContent = `${task.category} · ${task.priority} priority${task.waitingOn ? ` · Waiting on: ${task.waitingOn}` : ''}`;
     details.append(label, meta);
     const date = document.createElement('small');
     const overdue = !task.done && task.date && task.date < localToday;
@@ -171,6 +174,7 @@ function render() {
     row.append(check, details, actions);
     list.append(row);
   });
+  renderFollowups(localToday);
   $('#active-count').textContent = tasks.filter(t => !t.done).length;
   $('#today-count').textContent = tasks.filter(t => !t.done && t.date === localToday).length;
   $('#overdue-count').textContent = tasks.filter(t => !t.done && t.date && t.date < localToday).length;
@@ -178,6 +182,90 @@ function render() {
   $('#task-count').textContent = `${visible.length} shown · ${tasks.length} total`;
   $('#empty-tasks').hidden = visible.length > 0;
   $('#empty-tasks').textContent = tasks.length ? 'No tasks match this filter.' : 'A clear slate. Add a generic task to get started.';
+}
+function renderFollowups(localToday) {
+  const active = tasks.filter(task => !task.done);
+  $('#followup-overdue-count').textContent = active.filter(t => t.date && t.date < localToday).length;
+  $('#followup-today-count').textContent = active.filter(t => t.date === localToday).length;
+  const groups = { overdue: [], today: [], upcoming: [], waiting: [] };
+  active.forEach(task => {
+    if (task.status === 'Waiting') groups.waiting.push(task);
+    else if (task.date) groups[task.date < localToday ? 'overdue' : task.date === localToday ? 'today' : 'upcoming'].push(task);
+  });
+  Object.entries(groups).forEach(([group, records]) => {
+    const list = $(`#followup-${group}`);
+    list.replaceChildren();
+    records.sort((a, b) => (a.date || '9999-12-31').localeCompare(b.date || '9999-12-31')).forEach(task => {
+      const overdue = task.date && task.date < localToday;
+      const row = document.createElement('li');
+      row.className = `followup-row${overdue ? ' is-overdue' : ''}`;
+      const details = document.createElement('div');
+      details.className = 'task-details';
+      const title = document.createElement('strong');
+      title.textContent = task.title;
+      const date = document.createElement('p');
+      date.className = overdue ? 'overdue' : 'muted';
+      date.textContent = !task.date ? 'No follow-up date set' : `${overdue ? 'Overdue' : task.date === localToday ? 'Due today' : 'Upcoming'}: ${task.date}`;
+      details.append(title, date);
+      if (task.nextAction) {
+        const next = document.createElement('p'); next.textContent = `Next: ${task.nextAction}`; details.append(next);
+      }
+      const controls = document.createElement('div');
+      controls.className = 'followup-controls';
+      const dateForm = document.createElement('form');
+      const dateLabel = document.createElement('label');
+      dateLabel.textContent = 'Follow-up date';
+      const input = document.createElement('input');
+      input.type = 'date'; input.value = task.date;
+      input.setAttribute('aria-label', `Follow-up date for ${task.title}`);
+      dateLabel.append(input);
+      const save = document.createElement('button');
+      save.type = 'submit'; save.textContent = 'Save date';
+      save.setAttribute('aria-label', `Save follow-up date for ${task.title}`);
+      dateForm.append(dateLabel, save);
+      dateForm.addEventListener('submit', event => {
+        event.preventDefault();
+        if (!validDate(input.value)) { input.reportValidity(); return; }
+        task.date = input.value;
+        if (editingId === task.id) $('#task-date').value = task.date;
+        saveTasks(); render();
+        $('#followup-feedback').textContent = task.date ? `Follow-up date saved: ${task.date}.` : 'Follow-up date cleared. The task remains in Workload Management.';
+        $('#followups-title').focus();
+      });
+      const waitingLabel = document.createElement('label');
+      waitingLabel.textContent = 'Waiting on (category only)';
+      const waiting = document.createElement('select');
+      waiting.id = `waiting-${task.id}`;
+      waiting.setAttribute('aria-label', `Waiting on for ${task.title}`);
+      WAITING_ON.forEach(category => {
+        const option = document.createElement('option'); option.value = category; option.textContent = category || 'Not specified'; waiting.append(option);
+      });
+      waiting.value = task.waitingOn;
+      waiting.addEventListener('change', () => {
+        task.waitingOn = waiting.value;
+        if (editingId === task.id) $('#task-waiting-on').value = task.waitingOn;
+        saveTasks(); render();
+        document.getElementById(waiting.id)?.focus();
+        $('#followup-feedback').textContent = 'Waiting-on category saved.';
+      });
+      waitingLabel.append(waiting);
+      const complete = document.createElement('button');
+      complete.type = 'button'; complete.textContent = 'Complete';
+      complete.setAttribute('aria-label', `Complete follow-up: ${task.title}`);
+      complete.addEventListener('click', () => {
+        setStatus(task, 'Completed');
+        if (editingId === task.id) $('#task-status').value = task.status;
+        saveTasks(); render();
+        $('#followup-feedback').textContent = 'Follow-up and its workload task marked completed.';
+        $('#followups-title').focus();
+      });
+      controls.append(dateForm, waitingLabel, complete);
+      row.append(details, controls); list.append(row);
+    });
+    if (!records.length) {
+      const empty = document.createElement('li'); empty.className = 'muted'; empty.textContent = 'No follow-ups in this group.'; list.append(empty);
+    }
+  });
 }
 $('#task-form').addEventListener('submit', event => {
   event.preventDefault();
@@ -191,7 +279,7 @@ $('#task-form').addEventListener('submit', event => {
   if (!existing && tasks.length >= MAX_TASKS) { $('#task-feedback').textContent = 'Task limit reached (500). Delete old tasks before adding more.'; return; }
   const task = existing || { id: crypto.randomUUID(), done: false, completedOn: '' };
   Object.assign(task, { title, date, category: $('#task-category').value,
-    priority: $('#task-priority').value, nextAction: $('#task-next-action').value.trim() });
+    priority: $('#task-priority').value, waitingOn: $('#task-waiting-on').value, nextAction: $('#task-next-action').value.trim() });
   setStatus(task, $('#task-status').value);
   if (!existing) tasks.push(task);
   saveTasks(); resetEditor(); render();
@@ -226,6 +314,7 @@ $('#clear-data').addEventListener('click', () => {
     localStorage.removeItem(STORAGE_KEY);
     tasks = []; persistenceEnabled = true; resetEditor();
     $('#task-feedback').textContent = '';
+    $('#followup-feedback').textContent = '';
     $('#storage-status').textContent = 'All saved tasks deleted.';
     render();
   } catch { $('#storage-status').textContent = 'Saved tasks could not be deleted. Use your browser’s site-data settings to remove them.'; }
