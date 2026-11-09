@@ -13,13 +13,30 @@
     <aside class="notice"><strong>Generic work only.</strong> Use fictional labels and generic tasks. Never enter customer names, claim or policy numbers, accident facts, or other confidential information. This independent tool has no connection to an insurer or its systems.</aside>
     <p id="storage-status" role="status"></p>
     <section class="card" aria-labelledby="tasks-title">
-      <div class="section-heading"><div><span class="eyebrow">KEEP THINGS MOVING</span><h2 id="tasks-title">Tasks & follow-ups</h2></div><p id="task-count"></p></div>
+      <div class="section-heading"><div><span class="eyebrow">KEEP THINGS MOVING</span><h2 id="tasks-title">Workload management</h2></div><p id="task-count"></p></div>
+      <div class="summary" aria-label="Workload summary" aria-live="polite">
+        <div><strong id="active-count">0</strong><span>Active tasks</span></div>
+        <div><strong id="today-count">0</strong><span>Due today</span></div>
+        <div><strong id="overdue-count">0</strong><span>Overdue</span></div>
+        <div><strong id="completed-count">0</strong><span>Completed today</span></div>
+      </div>
       <form id="task-form">
-        <label>Generic task <input id="task-title" required maxlength="120" placeholder="For example: Review training checklist" autocomplete="off"></label>
-        <label>Follow-up date (optional) <input id="task-date" type="date"></label>
-        <button type="submit">Add task</button>
+        <label class="wide">Generic task <input id="task-title" required maxlength="120" placeholder="For example: Review training checklist" autocomplete="off"></label>
+        <label>Category <select id="task-category"><option>Training</option><option>Follow-up</option><option>Documentation</option><option>Planning</option><option>Other</option></select></label>
+        <label>Priority <select id="task-priority"><option>High</option><option selected>Medium</option><option>Low</option></select></label>
+        <label>Due date (optional) <input id="task-date" type="date"></label>
+        <label>Status <select id="task-status"><option>Not Started</option><option>In Progress</option><option>Waiting</option><option>Completed</option></select></label>
+        <label class="wide">Generic next action (optional) <input id="task-next-action" maxlength="200" placeholder="For example: Review the practice outline" autocomplete="off"></label>
+        <div class="form-actions"><button id="save-task" type="submit">Add task</button><button id="cancel-edit" type="button" hidden>Cancel edit</button></div>
       </form>
+      <p id="task-feedback" role="status"></p>
       <div class="filters" role="group" aria-label="Filter tasks"><button type="button" data-filter="all" aria-pressed="true">All</button><button type="button" data-filter="open" aria-pressed="false">Open</button><button type="button" data-filter="due" aria-pressed="false">Due</button><button type="button" data-filter="done" aria-pressed="false">Completed</button></div>
+      <div class="search-filters">
+        <label>Search tasks <input id="task-search" type="search" placeholder="Title, category, or next action" maxlength="200"></label>
+        <label>Filter priority <select id="priority-filter"><option value="">All priorities</option><option>High</option><option>Medium</option><option>Low</option></select></label>
+        <label>Filter status <select id="status-filter"><option value="">All statuses</option><option>Not Started</option><option>In Progress</option><option>Waiting</option><option>Completed</option></select></label>
+      </div>
+      <p class="muted">Active tasks appear first: overdue, due today, then upcoming. Undated and completed tasks follow. Counts include all tasks, regardless of filters.</p>
       <ul id="task-list"></ul><p id="empty-tasks" class="muted">A clear slate. Add a generic task to get started.</p>
     </section>
     <section class="card" aria-labelledby="templates-title">
