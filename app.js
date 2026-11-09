@@ -29,17 +29,25 @@ function validTask(task) {
     (task.nextAction === undefined || (typeof task.nextAction === 'string' && task.nextAction.length <= 200)) &&
     (task.completedOn === undefined || (typeof task.completedOn === 'string' && validDate(task.completedOn)));
 }
+// Only known task fields may reach persistent storage or backups.
+function normalizeTask(task) {
+  return { id: task.id, title: task.title, date: task.date, done: task.done,
+    category: task.category ?? 'Training', priority: task.priority ?? 'Medium',
+    status: task.status ?? (task.done ? 'Completed' : 'Not Started'),
+    nextAction: task.nextAction ?? '', waitingOn: task.waitingOn ?? '',
+    completedOn: task.done ? (task.completedOn ?? '') : '' };
+}
+function validTaskList(data) {
+  return Array.isArray(data) && data.length <= MAX_TASKS && data.every(validTask) &&
+    new Set(data.map(t => t.id)).size === data.length;
+}
 function loadTasks() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw === null) return;
     const data = JSON.parse(raw);
-    if (!Array.isArray(data) || data.length > MAX_TASKS || !data.every(validTask) || new Set(data.map(t => t.id)).size !== data.length) throw new Error('Invalid data');
-    // Extend existing records in place; retain IDs and the original storage key.
-    // Legacy completed tasks have no known completion day and are not counted as today.
-    tasks = data.map(task => ({ ...task, category: task.category ?? 'Training',
-      priority: task.priority ?? 'Medium', status: task.status ?? (task.done ? 'Completed' : 'Not Started'),
-      nextAction: task.nextAction ?? '', waitingOn: task.waitingOn ?? '', completedOn: task.done ? (task.completedOn ?? '') : '' }));
+    if (!validTaskList(data)) throw new Error('Invalid data');
+    tasks = data.map(normalizeTask);
   } catch {
     persistenceEnabled = false;
     $('#storage-status').textContent = 'Saved tasks could not be read. Existing storage has been left untouched. New tasks are temporary until you delete saved tasks below or resolve browser storage access.';
@@ -86,7 +94,7 @@ function editTask(task) {
   $('#task-feedback').textContent = 'Editing task. Save changes or cancel.';
   $('#task-title').focus();
 }
-function render() {
+function render({ followups = true } = {}) {
   const list = $('#task-list');
   list.replaceChildren();
   const localToday = today();
@@ -169,7 +177,7 @@ function render() {
     row.append(check, details, actions);
     list.append(row);
   });
-  renderFollowups(localToday);
+  if (followups) renderFollowups(localToday);
   $('#active-count').textContent = tasks.filter(t => !t.done).length;
   $('#today-count').textContent = tasks.filter(t => !t.done && t.date === localToday).length;
   $('#overdue-count').textContent = tasks.filter(t => !t.done && t.date && t.date < localToday).length;
@@ -180,8 +188,6 @@ function render() {
 }
 function renderFollowups(localToday) {
   const active = tasks.filter(task => !task.done);
-  $('#followup-overdue-count').textContent = active.filter(t => t.date && t.date < localToday).length;
-  $('#followup-today-count').textContent = active.filter(t => t.date === localToday).length;
   const groups = { overdue: [], today: [], upcoming: [], waiting: [] };
   active.forEach(task => {
     if (task.status === 'Waiting') groups.waiting.push(task);
@@ -211,7 +217,7 @@ function renderFollowups(localToday) {
       const dateLabel = document.createElement('label');
       dateLabel.textContent = 'Follow-up date';
       const input = document.createElement('input');
-      input.type = 'date'; input.value = task.date;
+      input.type = 'date'; input.value = task.date; input.id = `followup-date-${task.id}`;
       input.setAttribute('aria-label', `Follow-up date for ${task.title}`);
       dateLabel.append(input);
       const save = document.createElement('button');
@@ -225,7 +231,7 @@ function renderFollowups(localToday) {
         if (editingId === task.id) $('#task-date').value = task.date;
         saveTasks(); render();
         $('#followup-feedback').textContent = task.date ? `Follow-up date saved: ${task.date}.` : 'Follow-up date cleared. The task remains in Workload Management.';
-        $('#followups-title').focus();
+        (document.getElementById(input.id) || $('#followups-title')).focus();
       });
       const waitingLabel = document.createElement('label');
       waitingLabel.textContent = 'Waiting on (category only)';
@@ -285,12 +291,20 @@ $('#task-title').addEventListener('input', () => $('#task-title').setCustomValid
 $('#cancel-edit').addEventListener('click', () => {
   resetEditor(); $('#task-feedback').textContent = 'Edit cancelled.'; $('#task-title').focus();
 });
-['#priority-filter', '#status-filter'].forEach(selector => $(selector).addEventListener('change', render));
-$('#task-search').addEventListener('input', render);
+['#priority-filter', '#status-filter'].forEach(selector => $(selector).addEventListener('change', () => {
+  // A selected status should not silently conflict with an Open/Due shortcut.
+  if (selector === '#status-filter' && $('#status-filter').value) {
+    filter = 'all';
+    document.querySelectorAll('[data-filter]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.filter === 'all')));
+  }
+  render({ followups: false });
+}));
+$('#task-search').addEventListener('input', () => render({ followups: false }));
 document.querySelectorAll('[data-filter]').forEach(button => button.addEventListener('click', () => {
   filter = button.dataset.filter;
+  $('#status-filter').value = '';
   document.querySelectorAll('[data-filter]').forEach(b => b.setAttribute('aria-pressed', String(b === button)));
-  render();
+  render({ followups: false });
 }));
 $('#clear-data').addEventListener('click', () => {
   if (!confirm('Delete all tasks saved by Claims Companion in this browser? This cannot be undone.')) return;
@@ -310,10 +324,47 @@ window.addEventListener('storage', event => {
     persistenceEnabled = false;
   }
 });
-window.addEventListener('focus', render);
-// Refresh calendar-day counts overnight without rebuilding controls every minute.
+// Returning from a date picker or another window must not discard pending date edits.
 let renderedDay = today();
-setInterval(() => {
+function refreshCalendar() {
   if (today() !== renderedDay) { renderedDay = today(); render(); }
-}, 60000);
+}
+window.addEventListener('focus', refreshCalendar);
+setInterval(refreshCalendar, 60000);
 loadTasks(); render();
+
+$('#export-tasks').addEventListener('click', () => {
+  const backup = { app: 'claims-companion', version: 1, tasks: tasks.map(normalizeTask) };
+  const url = URL.createObjectURL(new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' }));
+  const link = document.createElement('a');
+  link.href = url; link.download = `claims-companion-tasks-${today()}.json`;
+  document.body.append(link); link.click(); link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  $('#backup-status').textContent = `Exported ${tasks.length} tasks. Documentation drafts are not included.`;
+});
+$('#import-tasks').addEventListener('change', async event => {
+  const file = event.target.files[0];
+  if (!file) return;
+  try {
+    if (file.size > 1024 * 1024) throw new Error('Backup exceeds the 1 MB size limit.');
+    const backup = JSON.parse(await file.text());
+    if (!backup || backup.app !== 'claims-companion' || backup.version !== 1 || !validTaskList(backup.tasks)) {
+      throw new Error('Invalid backup. Choose a version 1 Claims Companion task export with unique task IDs (maximum 500 tasks).');
+    }
+    if (!persistenceEnabled) throw new Error('Reload or clear unreadable saved tasks before importing. No tasks were changed.');
+    const imported = backup.tasks.map(normalizeTask);
+    if (!confirm(`Replace all ${tasks.length} current tasks with ${imported.length} imported tasks? Export a backup first. This cannot be undone.`)) {
+      $('#backup-status').textContent = 'Import cancelled. No tasks were changed.'; return;
+    }
+    // Persist before replacing in-memory tasks: storage failures leave current tasks intact.
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(imported));
+    tasks = imported; resetEditor();
+    filter = 'all'; $('#priority-filter').value = ''; $('#status-filter').value = ''; $('#task-search').value = '';
+    document.querySelectorAll('[data-filter]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.filter === 'all')));
+    $('#storage-status').textContent = ''; $('#task-feedback').textContent = ''; $('#followup-feedback').textContent = '';
+    render();
+    $('#backup-status').textContent = `Imported ${tasks.length} tasks, replacing the previous list. Documentation drafts were not imported.`;
+  } catch (error) {
+    $('#backup-status').textContent = error instanceof SyntaxError ? 'Invalid JSON. No tasks were changed.' : `Import failed: ${error.message} No tasks were changed.`;
+  } finally { event.target.value = ''; }
+});

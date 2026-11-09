@@ -9,19 +9,18 @@
   <script src="documentation.js" defer></script>
 </head>
 <body>
-  <header><span class="eyebrow">PERSONAL WORKSPACE</span><h1>Claims Companion</h1><p>A little structure for your learning day.</p></header>
+  <a class="skip-link" href="#tasks-title">Skip to workload</a>
+  <header><span class="eyebrow">PERSONAL WORKSPACE</span><h1>Claims Companion</h1><p>A little structure for your learning day.</p><nav aria-label="Sections"><a href="#tasks-title">Workload</a><a href="#followups-title">Follow-ups</a><a href="#templates-title">Documentation</a><a href="#backup-title">Backup</a></nav></header>
   <main>
     <aside class="notice"><strong>Generic work only.</strong> Use fictional labels and generic tasks. Never enter customer names, claim or policy numbers, accident facts, or other confidential information. This independent tool has no connection to an insurer or its systems.</aside>
     <p id="storage-status" role="status"></p>
     <section class="card" aria-labelledby="tasks-title">
-      <div class="section-heading"><div><span class="eyebrow">KEEP THINGS MOVING</span><h2 id="tasks-title">Workload management</h2></div><p id="task-count"></p></div>
+      <div class="section-heading"><div><span class="eyebrow">KEEP THINGS MOVING</span><h2 id="tasks-title" tabindex="-1">Workload management</h2></div><p id="task-count"></p></div>
       <div class="summary" aria-label="Workload summary" aria-live="polite">
         <div><strong id="active-count">0</strong><span>Active tasks</span></div>
-        <div><strong id="today-count">0</strong><span>Due today</span></div>
-        <div><strong id="overdue-count">0</strong><span>Overdue</span></div>
+        <div><strong id="today-count">0</strong><span>Due today / follow-ups</span></div>
+        <div><strong id="overdue-count">0</strong><span>Overdue / follow-ups</span></div>
         <div><strong id="completed-count">0</strong><span>Completed today</span></div>
-        <div><strong id="followup-overdue-count">0</strong><span>Overdue follow-ups</span></div>
-        <div><strong id="followup-today-count">0</strong><span>Follow-ups due today</span></div>
       </div>
       <form id="task-form">
         <label class="wide">Generic task <input id="task-title" required maxlength="120" placeholder="For example: Review training checklist" autocomplete="off"></label>
@@ -34,27 +33,29 @@
         <div class="form-actions"><button id="save-task" type="submit">Add task</button><button id="cancel-edit" type="button" hidden>Cancel edit</button></div>
       </form>
       <p id="task-feedback" role="status"></p>
-      <div class="filters" role="group" aria-label="Filter tasks"><button type="button" data-filter="all" aria-pressed="true">All</button><button type="button" data-filter="open" aria-pressed="false">Open</button><button type="button" data-filter="due" aria-pressed="false">Due</button><button type="button" data-filter="done" aria-pressed="false">Completed</button></div>
+      <div class="filters" role="group" aria-label="Filter tasks"><button type="button" data-filter="all" aria-pressed="true">All</button><button type="button" data-filter="open" aria-pressed="false">Open</button><button type="button" data-filter="due" aria-pressed="false">Due</button></div>
       <div class="search-filters">
         <label>Search tasks <input id="task-search" type="search" placeholder="Title, category, or next action" maxlength="200"></label>
         <label>Filter priority <select id="priority-filter"><option value="">All priorities</option><option>High</option><option>Medium</option><option>Low</option></select></label>
         <label>Filter status <select id="status-filter"><option value="">All statuses</option><option>Not Started</option><option>In Progress</option><option>Waiting</option><option>Completed</option></select></label>
       </div>
       <p class="muted">Active tasks appear first: overdue, due today, then upcoming. Undated and completed tasks follow. Counts include all tasks, regardless of filters.</p>
-      <ul id="task-list"></ul><p id="empty-tasks" class="muted">A clear slate. Add a generic task to get started.</p>
+      <ul id="task-list" tabindex="0" aria-label="Workload task list"></ul><p id="empty-tasks" class="muted">A clear slate. Add a generic task to get started.</p>
     </section>
     <section class="card" aria-labelledby="followups-title">
       <span class="eyebrow">CLOSE THE LOOP</span><h2 id="followups-title" tabindex="-1">Follow-up tracking</h2>
       <p class="muted">Follow-ups use the same task and due date as Workload Management. Change either date to update both. Waiting tasks appear only under Waiting; their dates still count toward overdue and due-today totals. Completed tasks remain in Workload Management.</p>
       <p class="notice"><strong>End-of-day reminder:</strong> Before finishing your day, verify that required follow-ups have been recorded in your employer’s official system. This personal checklist does not replace that system.</p>
       <p id="followup-feedback" role="status"></p>
+      <div class="followup-groups" tabindex="0" role="region" aria-label="Follow-up groups">
       <div class="followup-group" aria-labelledby="followup-overdue-title"><h3 id="followup-overdue-title">Overdue</h3><ul id="followup-overdue"></ul></div>
       <div class="followup-group" aria-labelledby="followup-today-title"><h3 id="followup-today-title">Due Today</h3><ul id="followup-today"></ul></div>
       <div class="followup-group" aria-labelledby="followup-upcoming-title"><h3 id="followup-upcoming-title">Upcoming</h3><ul id="followup-upcoming"></ul></div>
       <div class="followup-group" aria-labelledby="followup-waiting-title"><h3 id="followup-waiting-title">Waiting</h3><ul id="followup-waiting"></ul></div>
+      </div>
     </section>
     <section class="card" aria-labelledby="templates-title">
-      <span class="eyebrow">MAKE A START</span><h2 id="templates-title">Documentation Assistant</h2>
+      <span class="eyebrow">MAKE A START</span><h2 id="templates-title" tabindex="-1">Documentation Assistant</h2>
       <p class="notice" id="documentation-warning"><strong>Fictional practice only.</strong> Do not enter real claim or customer information without employer approval. Never include names, claim or policy numbers, accident facts, or other confidential details here. This tool only formats what you type; it does not make coverage, liability, settlement, or payment decisions.</p>
       <p class="muted" id="documentation-help">Drafts are not saved or sent anywhere. Changing templates, clearing the form, or leaving this page clears the draft. Review the preview before copying. Copying places text on your system clipboard.</p>
       <label>Template <select id="template-select">
@@ -69,7 +70,14 @@
       <label>Formatted text preview <textarea id="template-preview" rows="14" readonly autocomplete="off" spellcheck="false"></textarea></label>
       <div class="form-actions"><button id="copy-template" type="button">Copy to Clipboard</button><button id="clear-documentation" type="button">Clear Form</button></div><p id="copy-status" role="status"></p>
     </section>
-    <footer><p>Tasks stay in this browser profile on this site. No sync or backup; clearing browser data removes them. Other people using this profile may see them.</p><button id="clear-data" type="button" class="danger">Delete all saved tasks</button></footer>
+    <section class="card backup-card" aria-labelledby="backup-title">
+      <h2 id="backup-title" tabindex="-1">Task backup</h2>
+      <p id="backup-help" class="muted">Export tasks to a local JSON file before clearing browser data or changing computers. Import replaces all tasks after confirmation. Files are unencrypted; keep only generic tasks. Documentation drafts are never included. Maximum 500 tasks / 1 MB.</p>
+      <div class="backup-controls"><button id="export-tasks" type="button">Export tasks (JSON)</button><label>Import task backup (JSON)<input id="import-tasks" type="file" accept=".json,application/json" aria-describedby="backup-help"></label></div>
+      <p id="backup-status" role="status"></p>
+      <button id="clear-data" type="button" class="danger">Delete all saved tasks</button>
+    </section>
+    <footer><p>Tasks stay in this browser profile on this site. No automatic backup or sync; clearing browser data removes them. Other people using this profile may see them. No account or backend is required.</p></footer>
   </main>
 </body>
 </html>

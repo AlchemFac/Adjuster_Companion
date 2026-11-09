@@ -79,3 +79,33 @@ footer { padding: 0 4px 28px; }
 #doc-date-label { max-width: 260px; margin-bottom: 18px; }
 #clear-documentation { background: white; color: #315e4c; }
 @media (max-width: 560px) { .documentation-fields { grid-template-columns: 1fr; } }
+
+/* Keep the dashboard compact while making longer lists independently scrollable. */
+header, main { max-width: 1240px; }
+nav { display: flex; flex-wrap: wrap; gap: 10px 22px; margin: 22px 0 0; }
+a { color: #315e4c; text-underline-offset: 4px; }
+nav a { padding: 6px 0; font-weight: 650; }
+.skip-link { position: absolute; left: 16px; top: -100px; padding: 12px; background: white; z-index: 2; }
+.skip-link:focus { top: 8px; }
+h2 { scroll-margin-top: 18px; }
+.summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+#task-list, .followup-groups { max-height: 42rem; overflow-y: auto; scrollbar-gutter: stable; padding-right: 8px; }
+.followup-groups { padding-left: 4px; }
+.task-actions { flex: 0 0 175px; }
+.task button { min-height: 40px; }
+input, select, textarea { min-width: 0; }
+.backup-controls { display: flex; flex-wrap: wrap; gap: 16px; align-items: end; }
+.backup-controls input { max-width: 100%; }
+@media (min-width: 1100px) {
+  main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; align-items: start; }
+  main > .notice, #storage-status, main > section[aria-labelledby="templates-title"], .backup-card, footer { grid-column: 1 / -1; }
+  .card { margin: 0; }
+  #storage-status:empty { display: none; }
+  .search-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .search-filters label:first-child { grid-column: 1 / -1; }
+}
+@media (max-width: 650px) {
+  .task-actions { flex: 1 1 auto; }
+  #task-list, .followup-groups { max-height: 32rem; }
+}
+@media (prefers-reduced-motion: no-preference) { :focus-visible { transition: outline-offset .1s; } }
