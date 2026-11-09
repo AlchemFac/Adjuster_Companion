@@ -4,7 +4,7 @@ A personal practice organizer built with HTML, CSS, and vanilla JavaScript. It r
 
 ## Open the app
 
-For one person, extract all files into a permanent folder and double-click `index.html`. Keep `index.html`, `styles.css`, `app.js`, and `documentation.js` together. Use the same browser and location each time. A desktop shortcut can point to `index.html`.
+For one person, extract all files into a permanent folder and double-click `index.html`. Keep `index.html`, `styles.css`, `app.js`, `checklist-data.js`, `checklist.js`, and `documentation.js` together. Use the same browser and location each time. A desktop shortcut can point to `index.html`.
 
 File-based storage behavior varies by browser. For a consistent local origin or development, use Python 3:
 
@@ -30,6 +30,20 @@ Export a task backup before changing browsers, moving the folder, changing the l
 - **Clipboard and clearing:** Copy to Clipboard copies the current preview. If browser policy denies copying, the preview is selected for manual copying. Clear Form empties documentation fields and preview, but leaves your system clipboard unchanged. Changing documentation templates clears the prior form.
 - **Navigation and layout:** section links and a keyboard skip link, labeled controls, visible focus, responsive desktop columns and mobile stacking, and scrollable task/follow-up lists for larger workloads.
 - **End-of-day reminder:** a visible reminder to verify required follow-ups in the employer's official system. No automatic submission, emails, SMS, push, or background reminders.
+
+## Day 1 checklist
+
+The Day 1 section adapts the supplied new-file checklist into 26 generic reminders in six groups: file/record review; contact and digital responses; questions/information requests; investigation support (including report, damage, scene, traffic guidance, diagram and witness reviews); authorized decisions/next actions; and supervisor review.
+
+1. Choose a **fictional** Practice A–F set. There is no field for a real claim number, customer, identifier, or case facts. The sets are independent practice labels, not connections to employer files.
+2. Routine review steps are preselected. Select conditional steps only when applicable; leave other steps unselected. Selection checkboxes for missing steps mean **include when adding**, not completed.
+3. Choose a local calendar date and press **Add selected missing steps**. This creates regular tasks with the same due/follow-up date. Repeating it skips already-added steps, retains existing dates/statuses and creates no duplicates. If capacity would be exceeded, nothing is added.
+4. Once added, the step checkbox means **complete/reopen**. Edit task opens the normal workload editor for status, priority, next action or date changes. Changes from either view update the same record. Delete a task in Workload to remove its checklist step; it can then be selected and added again.
+5. Progress counts **added** steps only. An unselected or missing step is not treated as completed or automatically marked not applicable. Review applicability and official-system work yourself. Selections before adding are temporary; linked task progress persists and is included in task backups.
+
+The 24-hour unanswered-response reminder is conditional. This app tracks calendar dates, not elapsed hours: set exact timed reminders in the employer's official system. Overdue dates never move automatically. Supervisor reminders call for prompt injury triage review and review of non-auto property damage, without asking for any actual facts here.
+
+This checklist does not decide coverage, liability, payments, repair authorization or recovery. It reminds you to verify the authorized review/decision and communication in the official system. Company-specific system names and decision rules from the photo are intentionally expressed as generic administrative reminders. Follow current employer instructions and supervisor guidance; checking a box does not authorize any action.
 
 ## Privacy and data limitations
 
@@ -58,11 +72,13 @@ Application runtime has no third-party dependencies. Automated checks live in `t
 ```sh
 node --check app.js
 node --check documentation.js
+node --check checklist-data.js
+node --check checklist.js
 node tests/run.cjs
 ```
 
 The runner uses an installed `playwright` module. If it lives outside Node's normal lookup path, set `PLAYWRIGHT_MODULE` to its absolute module path. Optionally set `CHROMIUM_PATH` for an installed browser and `BASE_URL` for a different local address. It uses system Chromium at `/usr/bin/chromium` when present; otherwise Playwright's browser. No package installation is needed to use the app itself.
 
-`tests/run.cjs` runs workload, follow-up, documentation/clipboard, and final quality suites. Each uses an isolated browser context with fictional data. The quality suite covers 100-task backups, malformed/cancelled/oversized imports, storage failure, keyboard interaction, responsive widths, and network observations. Set `SCREENSHOT_DIR` to capture desktop/mobile review images. See [QUALITY_REVIEW.md](QUALITY_REVIEW.md) for observed results and test limitations.
+`tests/run.cjs` runs workload, follow-up, documentation/clipboard, final quality, and Day 1 checklist suites. Each uses an isolated browser context with fictional data. The quality suite covers 100-task backups, malformed/cancelled/oversized imports, storage failure, keyboard interaction, responsive widths, and network observations. Set `SCREENSHOT_DIR` to capture desktop/mobile review images. See [QUALITY_REVIEW.md](QUALITY_REVIEW.md) for observed results and test limitations.
 
 Manual spot checks: use Tab/Shift+Tab, Enter and Space to create/edit/complete tasks; check screen-reader announcements with your own assistive technology; copy and paste a fictional preview into a temporary editor; export/import a test backup before relying on it. Never use real case information for testing.

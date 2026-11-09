@@ -1,0 +1,36 @@
+'use strict';
+
+// Administrative reminders only; employer procedures and authorized staff control decisions.
+const DAY_ONE_SETS = ['Practice A', 'Practice B', 'Practice C', 'Practice D', 'Practice E', 'Practice F'];
+const DAY_ONE_STEPS = [
+  ['file-review', 'File and record review', 'Review file sections', 'Review policy, vehicle and party sections in the official system; update information there only.', true],
+  ['policy-history', 'File and record review', 'Review policy history', 'Review recent policy changes or lapses in the approved system; refer questions through employer procedures.', true],
+  ['initial-review', 'File and record review', 'Complete the initial file / liability review', 'Complete the required review in the official system. This checklist does not determine liability.', true],
+  ['record-checks', 'File and record review', 'Complete approved record checks', 'Use approved tools to verify owner and vehicle records. Keep addresses and identifiers out of this app.', true],
+  ['related-records', 'File and record review', 'Review related records and contact sources', 'Use approved searches for related files and contact sources; record results only in the official system.', true],
+  ['intro-contact', 'Contact and digital responses', 'Send approved introductory contacts', 'Use employer-approved channels and wording. This app does not send messages.', true],
+  ['response-review', 'Contact and digital responses', 'Review digital response completion', 'Check response completion in the official system; do not copy responses here.', true],
+  ['contact-attempt', 'Contact and digital responses', 'Follow up on missing responses', 'Make approved contact attempts for missing or unanswered digital requests; document them in the official system.', true],
+  ['digital-request', 'Contact and digital responses', 'Arrange a digital request if appropriate', 'If contact is unsuccessful, follow employer procedures for sending a digital request.', false],
+  ['response-24h', 'Contact and digital responses', 'Review unanswered requests after 24 hours', 'After 24 hours without response, use approved contact options. Set the exact timed reminder in the official system; this app tracks calendar dates only.', false],
+  ['coverage-questions', 'Questions and information requests', 'Review open coverage questions', 'Review outstanding questions with authorized staff under employer procedures; do not decide or record coverage here.', true],
+  ['request-information', 'Questions and information requests', 'Request information needed for open questions', 'Request needed information through approved channels and assign official-system tasks as appropriate.', true],
+  ['reports-discovery', 'Questions and information requests', 'Arrange reports and carrier discovery', 'Order approved reports or carrier discovery and request related-file setup through authorized staff when applicable.', false],
+  ['statements', 'Investigation support', 'Take or review statements', 'Take statements or review and summarize digital statements in the official system only.', true],
+  ['report-review', 'Investigation support', 'Review available reports', 'Review approved reports as needed; document findings in the official system.', false],
+  ['damage-review', 'Investigation support', 'Review vehicle damage information', 'Review approved damage information as needed; do not copy facts or images here.', false],
+  ['scene-review', 'Investigation support', 'Arrange scene review', 'Complete approved scene investigation activities when required.', false],
+  ['traffic-review', 'Investigation support', 'Review applicable traffic guidance', 'Review applicable guidance with authorized staff; do not infer a liability decision here.', false],
+  ['diagram-review', 'Investigation support', 'Review available diagrams', 'Review diagrams in approved systems when required.', false],
+  ['witness-review', 'Investigation support', 'Review witness information', 'Obtain or review witness statements through approved channels when required.', false],
+  ['authorized-decision', 'Authorized decisions and next actions', 'Verify authorized liability review and communication', 'Confirm authorized staff completed the liability decision and required communication in the official system; do not make a decision here.', true],
+  ['coverage-recheck', 'Authorized decisions and next actions', 'Recheck official coverage review status', 'Verify the official coverage review with authorized staff before dependent actions; do not record a determination here.', true],
+  ['repair-arrangements', 'Authorized decisions and next actions', 'Arrange repairs only after required authorization', 'Follow employer repair procedures only after required coverage, liability and other authorizations are confirmed in the official system.', false],
+  ['recovery-referral', 'Authorized decisions and next actions', 'Review recovery / subrogation referral needs', 'Use employer procedures to open, refer or transfer recovery work when applicable; do not make a recovery decision here.', false],
+  ['injury-supervisor', 'Supervisor review when applicable', 'Review an injury report promptly with a supervisor', 'If any party reports injury, contact a supervisor promptly for proper triage under employer procedures. Do not wait.', false],
+  ['property-supervisor', 'Supervisor review when applicable', 'Review non-auto property damage with a supervisor', 'If damage involves property other than a regular auto, review with a supervisor under employer procedures.', false],
+];
+function validDayOneLink(link) {
+  return link && link.type === 'day-one' && DAY_ONE_SETS.includes(link.set) &&
+    DAY_ONE_STEPS.some(step => step[0] === link.step);
+}

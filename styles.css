@@ -109,3 +109,16 @@ input, select, textarea { min-width: 0; }
   #task-list, .followup-groups { max-height: 32rem; }
 }
 @media (prefers-reduced-motion: no-preference) { :focus-visible { transition: outline-offset .1s; } }
+
+.day-one-card { grid-column: 1 / -1; }
+.day-one-list { max-height: 40rem; overflow-y: auto; scrollbar-gutter: stable; padding: 4px; }
+.day-one-list fieldset { min-width: 0; border: 1px solid #dce3da; border-radius: 8px; margin: 12px 0; padding: 16px; }
+.day-one-list legend { font-weight: 700; padding: 0 6px; }
+.day-one-step { padding: 12px 0; border-bottom: 1px solid #e5eae3; }
+.day-one-step:last-child { border-bottom: 0; }
+.day-one-step label { display: flex; align-items: start; gap: 10px; font-size: 1rem; }
+.day-one-step input { width: 20px; height: 20px; flex-shrink: 0; margin: 2px 0 0; accent-color: #315e4c; }
+.day-one-step p { margin: 8px 0 8px 30px; }
+.day-one-step small { display: block; margin: 8px 0 8px 30px; }
+.day-one-step button { margin-left: 30px; background: white; color: #315e4c; }
+#day-one-form select { margin-bottom: 0; }

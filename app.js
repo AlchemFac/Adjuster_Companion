@@ -22,6 +22,7 @@ function validTask(task) {
   return task && typeof task.id === 'string' && task.id.length > 0 && task.id.length <= 100 &&
     typeof task.title === 'string' && task.title.trim().length > 0 && task.title.length <= 120 &&
     typeof task.done === 'boolean' && typeof task.date === 'string' && validDate(task.date) &&
+    (task.checklist === undefined || validDayOneLink(task.checklist)) &&
     (task.waitingOn === undefined || WAITING_ON.includes(task.waitingOn)) &&
     (task.category === undefined || CATEGORIES.includes(task.category)) &&
     (task.priority === undefined || PRIORITIES.includes(task.priority)) &&
@@ -35,11 +36,13 @@ function normalizeTask(task) {
     category: task.category ?? 'Training', priority: task.priority ?? 'Medium',
     status: task.status ?? (task.done ? 'Completed' : 'Not Started'),
     nextAction: task.nextAction ?? '', waitingOn: task.waitingOn ?? '',
-    completedOn: task.done ? (task.completedOn ?? '') : '' };
+    completedOn: task.done ? (task.completedOn ?? '') : '',
+    ...(task.checklist ? { checklist: { type: 'day-one', set: task.checklist.set, step: task.checklist.step } } : {}) };
 }
 function validTaskList(data) {
   return Array.isArray(data) && data.length <= MAX_TASKS && data.every(validTask) &&
-    new Set(data.map(t => t.id)).size === data.length;
+    new Set(data.map(t => t.id)).size === data.length &&
+    new Set(data.filter(t => t.checklist).map(t => `${t.checklist.set}:${t.checklist.step}`)).size === data.filter(t => t.checklist).length;
 }
 function loadTasks() {
   try {
@@ -178,6 +181,7 @@ function render({ followups = true } = {}) {
     list.append(row);
   });
   if (followups) renderFollowups(localToday);
+  if (typeof renderDayOneChecklist === 'function') renderDayOneChecklist();
   $('#active-count').textContent = tasks.filter(t => !t.done).length;
   $('#today-count').textContent = tasks.filter(t => !t.done && t.date === localToday).length;
   $('#overdue-count').textContent = tasks.filter(t => !t.done && t.date && t.date < localToday).length;

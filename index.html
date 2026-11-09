@@ -5,12 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Claims Companion</title>
   <link rel="stylesheet" href="styles.css">
+  <script src="checklist-data.js" defer></script>
   <script src="app.js" defer></script>
+  <script src="checklist.js" defer></script>
   <script src="documentation.js" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#tasks-title">Skip to workload</a>
-  <header><span class="eyebrow">PERSONAL WORKSPACE</span><h1>Claims Companion</h1><p>A little structure for your learning day.</p><nav aria-label="Sections"><a href="#tasks-title">Workload</a><a href="#followups-title">Follow-ups</a><a href="#templates-title">Documentation</a><a href="#backup-title">Backup</a></nav></header>
+  <header><span class="eyebrow">PERSONAL WORKSPACE</span><h1>Claims Companion</h1><p>A little structure for your learning day.</p><nav aria-label="Sections"><a href="#tasks-title">Workload</a><a href="#followups-title">Follow-ups</a><a href="#day-one-title">Day 1 checklist</a><a href="#templates-title">Documentation</a><a href="#backup-title">Backup</a></nav></header>
   <main>
     <aside class="notice"><strong>Generic work only.</strong> Use fictional labels and generic tasks. Never enter customer names, claim or policy numbers, accident facts, or other confidential information. This independent tool has no connection to an insurer or its systems.</aside>
     <p id="storage-status" role="status"></p>
@@ -53,6 +55,19 @@
       <div class="followup-group" aria-labelledby="followup-upcoming-title"><h3 id="followup-upcoming-title">Upcoming</h3><ul id="followup-upcoming"></ul></div>
       <div class="followup-group" aria-labelledby="followup-waiting-title"><h3 id="followup-waiting-title">Waiting</h3><ul id="followup-waiting"></ul></div>
       </div>
+    </section>
+    <section class="card day-one-card" aria-labelledby="day-one-title">
+      <span class="eyebrow">GUIDED WORKFLOW</span><h2 id="day-one-title" tabindex="-1">Day 1 checklist</h2>
+      <p class="muted">A generic companion to your new-file checklist. Use a fictional practice set, select applicable steps, and add them to Workload. Checklist progress, workload status, follow-ups and backups all use the same task records. Completion only records your checkmark; it does not verify official-system work or authorize a decision.</p>
+      <p class="notice"><strong>Supervisor review:</strong> If any party reports injury, review promptly with your supervisor for proper triage—do not wait. Review non-auto property damage with your supervisor. Follow current employer procedures; this app sends no alerts or messages.</p>
+      <form id="day-one-form" aria-describedby="day-one-help">
+        <label>Fictional practice set <select id="day-one-set"><option>Practice A</option><option>Practice B</option><option>Practice C</option><option>Practice D</option><option>Practice E</option><option>Practice F</option></select></label>
+        <label>Date for newly added steps <input id="day-one-date" type="date" required></label>
+        <button type="submit">Add selected missing steps</button>
+      </form>
+      <p class="muted" id="day-one-help">Keep names, claim identifiers and case facts out of this app. Default selections cover routine review; select conditional steps only when applicable. The chosen date applies only to new tasks. Set exact 24-hour reminders in the official system; calendar dates here are not elapsed-time alerts.</p>
+      <p id="day-one-progress" role="status"></p><p id="day-one-feedback" role="status"></p>
+      <div id="day-one-list" class="day-one-list" tabindex="0" role="region" aria-label="Day 1 checklist steps"></div>
     </section>
     <section class="card" aria-labelledby="templates-title">
       <span class="eyebrow">MAKE A START</span><h2 id="templates-title" tabindex="-1">Documentation Assistant</h2>
