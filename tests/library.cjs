@@ -119,20 +119,19 @@ const key = 'claims-companion.library.v1';
     assert.equal((await read()).custom.length, 2);
     assert.equal(await p.evaluate(() => BUILTIN_LIBRARY_TEMPLATES[0].body), builtins[0].body);
 
-    // Unsubmitted custom editor drafts and practice notes do not enter storage or backups.
+    // Unsubmitted custom editor text never enters storage or backups; the note formatter is absent.
     const beforeDraft = await p.evaluate(() => ({ ...localStorage }));
     await p.locator('#library-new').click(); await p.locator('#library-custom-title').fill('UNSAVED_FICTIONAL_LIBRARY_DRAFT');
-    await p.locator('#doc-purpose').fill('FICTIONAL_NOTE_NEVER_PERSIST');
+    assert.equal(await p.locator('#documentation-form').count(), 0);
     assert.deepEqual(await p.evaluate(() => ({ ...localStorage })), beforeDraft);
     assert.equal(await p.evaluate(() => JSON.stringify(sessionStorage)), '{}');
     const downloadPromise = p.waitForEvent('download'); await p.locator('#export-tasks').click();
     const text = await fs.readFile(await (await downloadPromise).path(), 'utf8');
-    assert.ok(!text.includes('FICTIONAL_NOTE_NEVER_PERSIST') && !text.includes('UNSAVED_FICTIONAL_LIBRARY_DRAFT'));
+    assert.ok(!text.includes('UNSAVED_FICTIONAL_LIBRARY_DRAFT'));
     await p.reload();
-    assert.equal(await p.locator('#doc-purpose').inputValue(), '');
     assert.equal(await p.locator('#library-custom-title').inputValue(), '');
     assert.equal((await read()).custom.length, 2);
-    assert.ok(!JSON.stringify(await read()).includes('FICTIONAL_NOTE_NEVER_PERSIST'));
+    assert.ok(!JSON.stringify(await read()).includes('UNSAVED_FICTIONAL_LIBRARY_DRAFT'));
     // Clipboard denial selects the entire scaffold without claiming successful recent use.
     const recentBefore = (await read()).recent;
     await p.evaluate(() => Object.defineProperty(navigator.clipboard, 'writeText', { configurable: true, value: () => Promise.reject(new Error('Denied')) }));
@@ -155,7 +154,7 @@ const key = 'claims-companion.library.v1';
     }
     assert.deepEqual(errors, []);
     assert.ok(requests.every(r => new URL(r.url).origin === new URL(baseURL).origin && !r.body));
-    assert.ok(!JSON.stringify(requests).includes('FICTIONAL_NOTE_NEVER_PERSIST'));
+    assert.ok(!JSON.stringify(requests).includes('UNSAVED_FICTIONAL_LIBRARY_DRAFT'));
     console.log('PASS library: all 41 scenarios/7 categories, search, filters, favorites first/persistence, every clipboard round-trip, recent ID cap, custom validation/create/edit/duplicate/delete, refresh, unsaved draft isolation, task-only exports, clipboard refusal, quota warnings, responsive panels; no external data requests or page errors.');
     await context.close();
 

@@ -1,7 +1,6 @@
 'use strict';
 
 // Administrative reminders only; employer procedures and authorized staff control decisions.
-const DAY_ONE_SETS = ['Practice A', 'Practice B', 'Practice C', 'Practice D', 'Practice E', 'Practice F'];
 const DAY_ONE_STEPS = [
   ['file-review', 'File and record review', 'Review file sections', 'Review policy, vehicle and party sections in the official system; update information there only.', true],
   ['policy-history', 'File and record review', 'Review policy history', 'Review recent policy changes or lapses in the approved system; refer questions through employer procedures.', true],
@@ -30,7 +29,3 @@ const DAY_ONE_STEPS = [
   ['injury-supervisor', 'Supervisor review when applicable', 'Review an injury report promptly with a supervisor', 'If any party reports injury, contact a supervisor promptly for proper triage under employer procedures. Do not wait.', false],
   ['property-supervisor', 'Supervisor review when applicable', 'Review non-auto property damage with a supervisor', 'If damage involves property other than a regular auto, review with a supervisor under employer procedures.', false],
 ];
-function validDayOneLink(link) {
-  return link && link.type === 'day-one' && DAY_ONE_SETS.includes(link.set) &&
-    DAY_ONE_STEPS.some(step => step[0] === link.step);
-}

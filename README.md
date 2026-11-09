@@ -1,123 +1,87 @@
 # Claims Companion
 
-A personal practice organizer built with HTML, CSS, and vanilla JavaScript. It requires **no npm installation, backend, external account, cloud service, or internet connection**. Use only fictional labels and generic training information. There are no insurer integrations or insurer branding.
+A local, single-user organizer built with HTML, CSS and vanilla JavaScript. No npm installation, backend, external account, AI service, or insurer integration is required.
 
-## Open the app
+## Open or update
 
-For one person, extract all files into a permanent folder and double-click `index.html`. Keep `index.html`, `styles.css`, `app.js`, `checklist-data.js`, `checklist.js`, `documentation.js`, `template-library-data.js`, and `template-library.js` together. Use the same browser and location each time. A desktop shortcut can point to `index.html`.
+Keep all runtime files together: `index.html`, `styles.css`, `workspace-data.js`, `app.js`, `checklist-data.js`, `checklist.js`, `template-library-data.js`, and `template-library.js`. Extract the folder somewhere permanent and open `index.html` in a modern browser. A desktop shortcut can point to that file. File-mode storage/clipboard behavior varies by browser; use the same browser and folder location.
 
-File-based storage behavior varies by browser. For a consistent local origin or development, use Python 3:
+For local development or a consistent browser origin, run Python 3 in the project folder:
 
 ```sh
-cd Adjuster_Companion
 python3 -m http.server 8000 --bind 127.0.0.1
 ```
 
-On Windows, use `py -m http.server 8000 --bind 127.0.0.1` if `python3` is unavailable. Open `http://127.0.0.1:8000`; keep the terminal open and stop it with Ctrl+C. This serves static files locally; it is not an application backend. There is no build step and no `npm ci` or `npm run dev` command.
+On Windows, `py -m http.server 8000 --bind 127.0.0.1` may be needed instead. Open `http://127.0.0.1:8000`, keep the terminal open, and stop it with Ctrl+C. This only serves static files; it is not an application backend. There is no `npm ci` or `npm run dev` step.
 
-Export a task backup before changing browsers, moving the folder, changing the local address/port, updating the app files, or clearing site data.
+Export a backup before updating files, changing computers/browsers, moving the folder, changing ports, or clearing site data. Update with `git pull origin main`, then refresh. Do not mix files from different app versions.
 
-## Features
+## Claims and tasks
 
-- **Workload:** create, edit, prioritize, complete, reopen, and delete generic tasks. Category, priority, status, and optional next action are available in one form. Due dates are optional. Edit updates the original record, retaining its ID. Cancel edit leaves it unchanged.
-- **Dashboard:** active tasks, due today, overdue, and completed today. Due/overdue counts also represent follow-ups, including waiting tasks, without duplicate counters. All counts cover the full task list, independent of filters.
-- **Search and filters:** search title/category/next action, filter priority and status, or use All/Open/Due shortcuts. Selecting a status resets the shortcut; selecting a shortcut resets the status. Priority and search remain in effect. Completed tasks can be found using Filter status → Completed.
-- **Sorting:** active overdue tasks, today's tasks, upcoming tasks, undated tasks, then completed tasks; earlier dates first within each group.
-- **Follow-ups:** use the same task record and shared due date. Groups are Overdue, Due Today, Upcoming, and Waiting. Waiting status takes precedence for grouping; overdue waiting tasks remain highlighted and counted. Other undated tasks stay in Workload. Change a date with Save date or in the task editor. Dates are never automatically postponed.
-- **Waiting on:** generic Customer, Repair Shop, Internal Review, Other Insurer, or Other categories. Selecting one does not change status or date. Do not enter identities.
-- **Completion:** a workload checkbox or follow-up Complete button completes the same task. Unchecking reopens it as Not Started. Completed tasks leave follow-up groups. Completed today counts currently completed tasks with a recorded completion day matching the browser's local date; legacy completions without a known day are not counted as today.
-- **Template library:** 41 placeholder-only scenarios in seven categories, searchable with favorites first, category filtering, recent-use shortcuts, and custom generic definitions. Copy without entering private data; fill placeholders later in the approved system.
-- **Documentation:** Customer contact, Contact attempt, Investigation update, Repair estimate follow-up, and General follow-up. Each includes Purpose, Action taken, Information obtained, Outstanding items, Next steps, and an optional follow-up date. Prompts are hints, never prefilled facts. Missing information is marked `[Not provided]`; the app formats only what you enter and generates no coverage, liability, settlement, or payment decisions. The original learning outlines remain available.
-- **Clipboard and clearing:** Copy to Clipboard copies the current preview. If browser policy denies copying, the preview is selected for manual copying. Clear Form empties documentation fields and preview, but leaves your system clipboard unchanged. Changing documentation templates clears the prior form.
-- **Navigation and layout:** section links and a keyboard skip link, labeled controls, visible focus, responsive desktop columns and mobile stacking, and scrollable task/follow-up lists for larger workloads.
-- **End-of-day reminder:** a visible reminder to verify required follow-ups in the employer's official system. No automatic submission, emails, SMS, push, or background reminders.
+1. Enter a generic claim alias such as **Practice 01**, or a manually entered reference **only if your employer permits its local storage**. Confirm that choice and select Create claim. The checkbox is your acknowledgement, not proof of approval. Never enter customer names, policy numbers, case/accident facts, or unapproved identifiers.
+2. Each claim is a collapsible card with its own tasks. Select its summary to expand/collapse; keyboard users can use Enter/Space. Add task selects that claim in the shared editor. Collapse state lasts for the page session; the first claim opens after refresh.
+3. A task has a short title, multiline generic description, category, High/Medium/Low priority, due date, optional independent follow-up date, Not Started/In Progress/Waiting/Completed status, a generic waiting-on category, and multiline next steps. Description/next steps are optional and limited to 2,000 characters each; titles to 120.
+4. New tasks require a due date. Existing undated tasks are preserved and can remain undated when edited. Follow-up dates are always optional. Changing either date never changes the other or automatically postpones anything.
+5. Cancel hides the task editor without changing saved records. Edit updates the same record and ID. The Claim dropdown can move a task into another open claim without duplicating it. Complete/reopen using the task checkbox or status dropdown; follow-up Complete updates that same task. Delete removes only the task, without undo.
+6. Close/Reopen is a **manual claim action**. Completing all tasks never closes a claim. Closed claims retain all task fields/statuses; task controls are read-only until reopened. They remain visible through Show claims → Closed/All. Rename changes the label while retaining claim/task IDs. There is no claim deletion shortcut; close unused claims to retain their records.
 
-## Day 1 checklist
+Categories include Training, Follow-up, Documentation, Planning, Contact, Investigation, Coverage review, Liability review, Repairs, Recovery and Other. Waiting on uses generic Customer, Repair Shop, Internal Review, Other Insurer and Other labels—never actual identities.
 
-The Day 1 section adapts the supplied new-file checklist into 26 generic reminders in six groups: file/record review; contact and digital responses; questions/information requests; investigation support (including report, damage, scene, traffic guidance, diagram and witness reviews); authorized decisions/next actions; and supervisor review.
+## Dashboard, filters and follow-ups
 
-1. Choose a **fictional** Practice A–F set. There is no field for a real claim number, customer, identifier, or case facts. The sets are independent practice labels, not connections to employer files.
-2. Routine review steps are preselected. Select conditional steps only when applicable; leave other steps unselected. Selection checkboxes for missing steps mean **include when adding**, not completed.
-3. Choose a local calendar date and press **Add selected missing steps**. This creates regular tasks with the same due/follow-up date. Repeating it skips already-added steps, retains existing dates/statuses and creates no duplicates. If capacity would be exceeded, nothing is added.
-4. Once added, the step checkbox means **complete/reopen**. Edit task opens the normal workload editor for status, priority, next action or date changes. Changes from either view update the same record. Delete a task in Workload to remove its checklist step; it can then be selected and added again.
-5. Progress counts **added** steps only. An unselected or missing step is not treated as completed or automatically marked not applicable. Review applicability and official-system work yourself. Selections before adding are temporary; linked task progress persists and is included in task backups.
+Dashboard counters cover **open claims only**, independently of list filters or collapsed cards: active tasks, tasks due today, overdue tasks, completed today, follow-ups overdue and follow-ups due today. Closing a claim removes its tasks from these counters and follow-up groups without changing their statuses or dates.
 
-The 24-hour unanswered-response reminder is conditional. This app tracks calendar dates, not elapsed hours: set exact timed reminders in the employer's official system. Overdue dates never move automatically. Supervisor reminders call for prompt injury triage review and review of non-auto property damage, without asking for any actual facts here.
+Within a claim, tasks sort overdue first, then today, upcoming, undated and completed. Search covers claim label, title, description, category and next steps. Priority/status filters and All/Open/Due shortcuts apply to tasks within displayed claims. Selecting a status clears a conflicting shortcut; selecting a shortcut clears the status filter. Claim visibility is a separate Open/Closed/All filter.
 
-This checklist does not decide coverage, liability, payments, repair authorization or recovery. It reminds you to verify the authorized review/decision and communication in the official system. Company-specific system names and decision rules from the photo are intentionally expressed as generic administrative reminders. Follow current employer instructions and supervisor guidance; checking a box does not authorize any action.
+Follow-up groups use **only `followUpDate`**, never the due date. An incomplete task needs a follow-up date and an open claim to appear. Waiting status takes precedence for grouping, while overdue waiting tasks still count as overdue follow-ups and are highlighted. Waiting tasks without follow-up dates remain in their claim but do not appear in follow-ups. Save date in that view changes only the follow-up date. Edit task opens the shared editor for all other fields.
+
+Dates use YYYY-MM-DD calendar strings compared with the browser's local day, not a UTC-derived day. Counters update on return after a day change or within a minute after midnight. Exact timed reminders belong in the employer's official system. A visible end-of-day reminder asks you to verify official-system follow-up records; the app sends no messages or notifications.
+
+## Existing data and backups
+
+The new workspace is one atomic localStorage record at `claims-companion.workspace.v2`, containing claims and tasks together. It supports up to 200 claims and 500 tasks. There is no separate duplicate follow-up database.
+
+On first upgrade, a valid old `claims-companion.tasks.v1` list moves into one collapsible **Existing work** claim. Task IDs, content, priorities and statuses are retained. The old shared date is initially copied to both the due and follow-up fields, preserving both earlier meanings; you can then edit each independently. Old checklist-task content is retained as ordinary tasks, while interactive checklist links are retired. New tasks start with no follow-up date.
+
+The old v1 storage record is retained unchanged as a recovery copy after migration. Once a v2 workspace exists, it takes precedence so refresh never duplicates tasks. The recovery copy does not receive new changes. Explicit Delete all claims and tasks clears current work and the older copy; an empty v2 marker prevents old tasks reappearing. Template Library preferences are not cleared.
+
+Use **Backup → Export claims and tasks (JSON)** before relying on browser storage. A version 2 file has `app`, `version`, `claims` and `tasks`. Keep it safe: it contains references and descriptions **unencrypted**. Import replaces both claims and tasks together after confirmation, never appends duplicates, and validates unique IDs/references, categories, statuses, dates, limits, and task-to-claim links. Invalid/orphaned data, cancellation or a failed storage write leaves current work untouched. Maximum file size is 10 MB, allowing larger multiline descriptions; actual browser storage can fill before the 500-task cap.
+
+Version 1 task exports are still accepted and convert into Existing work. A version 2 export requires this or a newer compatible app version. Template definitions/favorites/recent IDs are separate and **not included** in workspace backups. No completed note drafts are exported.
+
+Storage is local to this browser/profile/origin, with no automatic backup or sync. Other people using the profile can access it. Clearing site data, private browsing or device loss can remove work. Use one editing tab: another tab's changes disable saving in a stale tab until reload, though truly simultaneous writes can still race. Read/write problems show warnings; export any readable work before clearing data. No silent reset or deletion is performed when saved data is unreadable.
+
+## Day 1 reference
+
+The 26 generic Day 1 items in six groups are now **view-only reference**, including the supervisor-review reminders. There are no selection/completion checkboxes, practice sets, progress counters or task-generation buttons. Add relevant tasks to a claim yourself. The reference neither verifies official work nor makes coverage, liability, repair-authorization or recovery decisions. Follow current employer procedures and supervisor guidance.
 
 ## Documentation Templates library
 
-Use **Template library** in the navigation. The desktop view has search/categories/list on the left and title, intended use, preview and Copy Template on the right. Mobile stacks the panels. Selecting or copying a template keeps the current search and category filters.
+The editable **Documentation Assistant / practice note formatter has been removed**. The separate reusable **Template Library remains available** with all 41 placeholder-only scenarios in seven categories: Initial claim handling (5), Customer contact (7), Investigation (7), Coverage (5), Liability (5), Vehicle damage and repairs (6), and Follow-ups and resolution (6).
 
-The 41 original generic scenarios cover Initial claim handling (5), Customer contact (7), Investigation (7), Coverage (5), Liability (5), Vehicle damage and repairs (6), and Follow-ups and resolution (6). Each preview is a neutral scaffold with explicit placeholders. Coverage/liability templates leave determinations and supporting evidence unfilled; contact templates require verification rather than asserting that an attempt or conversation occurred. No deadlines, policy requirements, legal standards or decisions are invented. Review against employer-approved documentation standards and remove inapplicable sections after pasting into the approved system.
+Search by title/keyword or filter category. Favorites sort first and persist by ID. Recently Used shows the last eight successfully copied template IDs. Copy Template copies the full read-only preview including placeholders; complete private fields later in the employer's approved system and verify all wording against its standards. If clipboard permissions are denied, the preview is selected for manual copying; failed automatic copies do not enter recent history.
 
-- **Copy Template** copies the entire preview, including its heading and placeholders. Fill `[DATE]`, `[CLAIM NUMBER]`, `[PARTY]`, `[ACTION TAKEN]`, `[DETERMINATION]`, and other private fields only inside the employer's approved system. There is no private-data entry form in this library.
-- **Favorites:** use the star beside a list item or Add to favorites in the preview. Favorites sort first; Favorites only narrows the list. Favorite IDs persist in this browser.
-- **Recently Used:** the last eight distinct successfully copied template IDs, newest first. Failed automatic copying selects the preview for manual copying but does not claim success or add recent history, because manual clipboard activity cannot be verified. Selecting a recent item opens it without changing the filters.
-- **Custom templates:** New generic template creates a definition with title, category, intended-use description and placeholder body. Edit changes its existing ID. Duplicate creates a new custom copy of either a built-in or custom definition. Only custom definitions can be deleted, with confirmation; deletion also removes their favorite/recent IDs. Built-ins remain unchanged.
-- **Validation:** titles/description/body are required, with limits of 100/300/6,000 characters. A body needs at least two distinct uppercase bracketed placeholders, such as `[PURPOSE]` and `[ACTION TAKEN]`. Saving requires an explicit generic-content confirmation. Common email, phone and identifier patterns are rejected. These checks are not comprehensive: they cannot reliably recognize every name, accident fact, proprietary procedure or confidential detail. Never save completed notes or customer-specific material.
-- **Storage:** only generic custom definitions and favorite/recent IDs are saved under `claims-companion.library.v1`. Searches, selected preview text, unsaved custom edits and completed notes are not saved. Unsaved edits clear on departure/reload. The existing practice note formatter remains separate and its drafts stay in memory.
-- **Limitations:** up to 100 custom definitions. Templates/favorites are local, unencrypted and not synced. They are **not included in task JSON backups**, and Delete all saved tasks does not delete them. Keep a separate copy of important generic wording if needed. If storage is blocked/full/corrupt, built-ins still work and changes stay in memory with a warning; unknown saved data is left untouched. Changes from another tab disable preference saving here until reload.
+Custom generic templates can be created, edited, duplicated or deleted. Definitions require title, category, intended use, body, two distinct uppercase bracketed placeholders, and explicit confirmation that no completed note/confidential content is present. Limits are 100 custom definitions and 100/300/6,000 characters for title/description/body. Checks flag common email/phone/identifier patterns but cannot detect all confidential content. Never put approved claim references into custom definitions—reference approval applies only to claim labels, not reusable wording.
 
-### Try it with fictional scenarios
+Only generic definitions and favorite/recent IDs persist at `claims-companion.library.v1`. Searches, selected preview text and unsaved editor contents are not stored. Unsaved edits clear on page departure/reload. No claims text is copied automatically into templates. Storage failures leave built-ins usable and changes temporary with a warning. Definitions are local, unencrypted and outside workspace JSON backups.
 
-1. Search **Police report**, select **Police report review**, and confirm the preview contains bracketed fields rather than invented report facts. Copy it into a temporary plain-text editor; leave all private placeholders unfilled while testing.
-2. Choose **Coverage**, open **Coverage verification**, and verify `[DETERMINATION]` and `[SUPPORTING EVIDENCE]` remain placeholders. The app does not choose an outcome.
-3. Star **Repair shop follow-up**, refresh, then turn on Favorites only. Copy it and verify Recently Used shows it; search/category filters remain as chosen.
-4. Select New generic template. Use title **Fictional practice follow-up**, category **Follow-ups and resolution**, description **Use for a generic training exercise**, and this body:
+Try a fictional example: search **Police report**, copy its template into a temporary editor, and leave placeholders unfilled. Star **Repair shop follow-up**, copy it and refresh to verify favorites/recent use. Create **Practice follow-up** with body `Action: [ACTION TAKEN]` and `Next: [NEXT ACTION]`, edit or duplicate its generic wording, then delete the duplicate.
 
-   ```text
-   Purpose: [PURPOSE]
-   Action taken: [ACTION TAKEN]
-   Outstanding items: [OUTSTANDING ITEMS]
-   Next action: [NEXT ACTION]
-   Follow-up date: [FOLLOW-UP DATE]
-   ```
+## Checks and changed files
 
-5. Confirm it is generic and save. Edit its generic wording, duplicate it, refresh to check persistence, then delete the duplicate. Never fill its placeholders with a real person's details here.
-6. Try saving a body without placeholders; it should be rejected. Cancel an unsaved edit and verify it is absent after refresh. If clipboard permission is denied, use the selected preview and your browser's Copy command.
-
-### Files changed for this library
-
-`template-library-data.js` defines the scenarios; `template-library.js` handles navigation, copying, custom definitions and ID-only preferences. `index.html` and `styles.css` add the responsive library panels while preserving the existing tools. `tests/library.cjs` and `tests/run.cjs` add/re-run browser checks; README and the review report describe usage and limitations. Existing workload, follow-up, checklist and practice-formatter logic is unchanged.
-
-## Privacy and data limitations
-
-Never enter real customer names, claim or policy numbers, accident facts, or other confidential insurance information. Documentation also warns against using real information without employer approval. This personal tool is intended for fictional practice; it cannot detect confidential text.
-
-Tasks are unencrypted in `localStorage`, scoped to the current browser profile and origin. People using that profile may see them. They are not automatically backed up or synced. Private browsing, clearing site data, changing origins, or losing the device can remove access. Generic custom template definitions are intentionally saved only after explicit confirmation; they are reusable scaffolds, not completed documentation drafts. The current maximum is 500 tasks. Documentation fields are limited to 2,000 characters each; task titles to 120 and next actions to 200.
-
-**Documentation drafts are never saved in task records, browser storage, or backup files and are never transmitted.** They remain only in the page and are cleared by Clear Form, template changes, reload, or departure/history restoration. Browser/OS clipboard managers or anything you manually paste elsewhere are outside this app's control.
-
-Dates use YYYY-MM-DD calendar strings, compared to the browser's local day without UTC conversion for grouping. Counts refresh on return after a day change or within a minute after midnight while the page is open. The device clock/time zone must be correct.
-
-Use one editing tab. If another tab changes storage, saving is disabled in the stale tab until reload. Truly simultaneous writes can still race. Storage failures show a warning; unreadable saved data is left untouched. Export any readable tasks before deleting saved data. Deleting tasks has no undo.
-
-## Task backup and restore
-
-1. Go to **Backup → Export tasks (JSON)**. Your browser downloads a local file containing task fields only, with format `{"app":"claims-companion","version":1,"tasks":[...]}`.
-2. Keep the JSON file somewhere safe. It is **unencrypted** and must contain only generic task information. Backups are manual; keep an up-to-date copy before replacing app files or clearing browser data.
-3. To restore, open the app and choose **Import task backup (JSON)**. Review the confirmation: import **replaces all current tasks**, rather than appending. Export the current list first if you need to retain it. Cancel leaves it unchanged.
-4. Only version 1 task exports up to 1 MB and 500 unique task IDs are accepted. Invalid dates, categories, priorities, statuses, duplicate IDs, or malformed JSON are rejected without changing tasks. Reimporting the same backup does not duplicate tasks. An empty valid backup replaces the list with no tasks after confirmation.
-5. Documentation drafts are never exported or imported. A successful import saves tasks in the current browser; it does not change another browser or an older backup file. Storage failures leave the current task list intact. If another tab has disabled saving, reload first.
-
-## Development checks
-
-Application runtime has no third-party dependencies. Automated checks live in `tests/` and use **Playwright only as development tooling**, not as an app dependency. They need Node.js, Playwright with Chromium available, and the local server above running in another terminal.
+App runtime has no third-party dependencies. Development checks use Node.js and an available Playwright/Chromium installation; start the local server first:
 
 ```sh
+node --check workspace-data.js
 node --check app.js
-node --check documentation.js
-node --check checklist-data.js
 node --check checklist.js
 node --check template-library-data.js
 node --check template-library.js
 node tests/run.cjs
 ```
 
-The runner uses an installed `playwright` module. If it lives outside Node's normal lookup path, set `PLAYWRIGHT_MODULE` to its absolute module path. Optionally set `CHROMIUM_PATH` for an installed browser and `BASE_URL` for a different local address. It uses system Chromium at `/usr/bin/chromium` when present; otherwise Playwright's browser. No package installation is needed to use the app itself.
+If Playwright is outside Node's normal module path, set `PLAYWRIGHT_MODULE` to its absolute module path. `CHROMIUM_PATH` optionally selects an installed browser; `BASE_URL` selects a different local server. Test tooling is not needed to use the app.
 
-`tests/run.cjs` runs workload, follow-up, documentation/clipboard, final quality, Day 1 checklist, and Template Library suites. Each uses an isolated browser context with fictional data. The quality suite covers 100-task backups, malformed/cancelled/oversized imports, storage failure, keyboard interaction, responsive widths, and network observations. Set `SCREENSHOT_DIR` to capture desktop/mobile review images. See [QUALITY_REVIEW.md](QUALITY_REVIEW.md) for observed results and test limitations.
+Suites cover the data model/migration, claims/tasks, independent follow-ups/time zones, backup/performance/privacy, static reference/removed formatter, and Template Library. Obsolete interactive checklist and practice-formatter tests were replaced to match the requested removals. See [QUALITY_REVIEW.md](QUALITY_REVIEW.md) for results and limitations.
 
-Manual spot checks: use Tab/Shift+Tab, Enter and Space to create/edit/complete tasks; check screen-reader announcements with your own assistive technology; copy and paste a fictional preview into a temporary editor; export/import a test backup before relying on it. Never use real case information for testing.
+`workspace-data.js` defines validation/migration; `app.js` owns claims/tasks/backup; `index.html` and `styles.css` present the UI; `checklist-data.js` / `checklist.js` render read-only reference. `documentation.js` was removed. Template Library runtime code is unchanged. Documentation and browser tests were updated for the new behavior.

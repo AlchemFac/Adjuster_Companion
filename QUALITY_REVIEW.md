@@ -1,68 +1,39 @@
-# Final quality review
+# Claims workspace quality review
 
-The app remains HTML, CSS, and vanilla JavaScript. Runtime has no dependencies, backend, account, telemetry, or external integration. All testing used fictional training data in isolated Chromium contexts against a local static server.
+The app is still HTML/CSS/vanilla JavaScript with no runtime dependencies, backend, account, insurer integration or external API. The editable practice Documentation Assistant has been removed; the separate placeholder Template Library is retained. Day 1 is now a static, view-only reference.
 
-## Fixes made
+## Changes and migration
 
-- Added the requested JSON task export/import workflow, previously absent. Imports validate the format, dates, enums, size, capacity, and unique IDs; require confirmation before replacement; and save successfully before changing the in-memory list. Repeated imports never append duplicates. Only known task fields enter backups/storage, excluding documentation drafts and arbitrary imported properties.
-- Removed duplicate due/overdue dashboard counters and the Completed shortcut duplicated by the status filter. Retained useful All/Open/Due shortcuts. Selecting an explicit status clears conflicting shortcuts, avoiding an unexpectedly empty list.
-- Fixed pending follow-up date edits being lost when window focus or workload filters rebuilt the follow-up view. Saving a follow-up date restores keyboard focus to its input when available.
-- Added desktop columns, mobile stacking, section links, a skip link, labeled scrollable lists, and bounded list heights so 100 tasks do not bury the documentation form and backup controls.
-- Rewrote README with Windows/local-server launch instructions, features, privacy/storage limitations, and task backup/restore procedures. Added repeatable development-only browser checks under `tests/`; app users do not need these test tools.
+- Workload is organized into collapsible claims with user-added tasks. Claim labels can be generic aliases or employer-approved references, with explicit acknowledgement and an unencrypted-storage warning. Names and case facts remain excluded.
+- Claims manually close/reopen without changing or deleting task records. Closed-claim tasks are read-only and excluded from the open-claim dashboard and follow-up lists. Rename preserves identity; editing a task can move it to another open claim without duplication.
+- Tasks retain titles/status/category/priority and add a multiline description, independent optional follow-up date and multiline next steps. New tasks need a due date; existing undated tasks remain supported. Follow-up edits never change due dates.
+- One version 2 workspace stores claims and tasks atomically. Version 1 local data/backups migrate into Existing work, preserving IDs, content, statuses and both earlier date meanings. Former checklist tasks remain ordinary tasks; interactive checklist links are retired. The original local v1 snapshot is retained for recovery until explicit clearing and is never used in preference to an existing v2 workspace.
+- Version 2 backups include claim/task relationships. Imports reject orphan links, duplicates, invalid fields and over-capacity files before replacement. Import persists successfully before replacing the in-memory workspace. Explicit clear removes legacy work too; an empty v2 marker prevents resurrection.
+- Keyboard focus is retained after task completion/deletion/filtering where possible. Native details/summary cards support keyboard collapse. Mobile checkbox sizing and status dropdowns were improved after visual review.
 
-## Passed automated checks
+## Checks executed
 
-`node --check app.js`, `node --check documentation.js`, and `git diff --check` passed. `node tests/run.cjs` completed successfully with all four suites; the quality suite was rerun successfully after adding empty-backup and offline-operation cases.
+`node tests/run.cjs` completed with all six current suites passing after the final runtime/UI changes. Syntax checks and `git diff --check` passed. Tests used fictional data in isolated Chromium contexts and a local static server.
 
-| Area | Verified behavior |
+| Suite | Verified behavior |
 | --- | --- |
-| Tasks | Create all fields, edit with stable ID and no duplicate, cancel edit, change priority/status, complete/reopen, delete, search and combined filters, reject whitespace-only titles |
-| Dashboard | Active, due today, overdue and completed-today counts; completion/reopening and filtering semantics; 100-task expected counts |
-| Follow-ups | Overdue, today, upcoming, waiting and completed scenarios; waiting-on categories; shared task/date updates; dates never automatically postponed |
-| Local dates | Fixed-time tests in Chicago, Tokyo, Kiritimati and Los Angeles; differing local calendar days and a daylight-saving date; classification refresh after local midnight without date mutation |
-| Documentation | All five requested templates, all fields, exact previews, explicit missing-value markers, optional date, template-switch clearing, original learning outlines, literal markup handling |
-| Clipboard | Actual clipboard write/read round-trip for each template and original outline; forced permission refusal selects the preview for manual copying; empty-preview feedback |
-| Clear Form | Fields, optional date and preview cleared; template selection retained; no task data modified |
-| Persistence | Task creation/completion/deletion survives reload; legacy record migration retains IDs; unreadable data preserved; cross-tab conflict blocks stale writes |
-| Draft isolation | Documentation leaves localStorage/sessionStorage unchanged, is absent from task exports, and is cleared on reload and simulated page departure; task storage remains intact |
-| JSON backup | Browser download and exact task round-trip; repeated/empty restore; cancellation; invalid JSON/schema/version/date/status/priority, duplicate IDs, 501 records and files over 1 MB rejected; simulated storage failure preserves tasks; unknown metadata omitted |
-| Workload size | 100 fictional records imported and rendered; search, counts, edits, deletion, persistence and backup tested against the populated list |
-| Accessibility/layout | Visible controls have labels/accessibility names; keyboard-only creation, completion, deletion, and skip navigation; focus retention; no horizontal overflow/offscreen controls at 320, 390, 768, 1024 and 1440 px; desktop/mobile screenshots visually reviewed |
-| Network/offline | Observed requests only loaded local assets with no entered data in request bodies/URLs; task operations worked with the browser set offline after loading; no external account/backend |
+| Model | Deterministic legacy migration, IDs/old dates/statuses preserved, v1/v2 backup parsing, calendar validation, rejection of duplicate/orphan/invalid records, bounded fields, unknown draft properties excluded |
+| Workload | Confirmation for reference/alias entry, duplicate label prevention, claim creation/collapse/rename/close/reopen, no auto-close, every task field, multiline values, stable-ID editing, cancel, priority/search/status filters, task movement without duplication, due-date requirement, deletion, refresh, keyboard completion/focus |
+| Follow-ups | Distinct due/follow-up counts, optional follow-up dates, waiting/completed tasks, no automatic postponement, clearing follow-up without changing due date, persistence, closed-claim exclusion, local calendar classification in Chicago/Tokyo/Kiritimati/Los Angeles, midnight transition |
+| Quality | 100 tasks across 10 claims, known dashboard counts/search, repeated backup restore without duplicates, v1/v2 round-trip, cancel/malformed/invalid/duplicate/orphan/over-limit/oversized imports, simulated write failure, unknown note fields excluded, startup migration/reload/clear without old-task resurrection, offline task operations, stale-tab write protection, visible form labels, keyboard collapse, widths 320–1440 px |
+| Static reference | All 26 items in six groups, no interactive checklist/task-generation controls or persistent progress, removed note formatter, retained Template Library |
+| Template Library | All 41 previews/clipboard round-trips, seven categories/search/filtering, favorites/recent IDs, custom validation/create/edit/duplicate/delete, refresh, unsaved editor isolation, clipboard refusal fallback, quota/blocked/corrupt storage behavior, responsive panels |
 
-In the final quality-only run, median rebuilding of the 100-task lists was **86.7 ms** across five samples; a filtered search took **174 ms** including browser automation. The full-suite run measured 115.5 ms and 272 ms respectively. These are local observations, not performance guarantees on other devices. No page JavaScript errors were reported.
+No page JavaScript errors were reported. Observed requests only loaded local assets and did not transmit entered text in request URLs/bodies. Runtime code has no external service calls. New grouped-claim desktop/mobile screenshots were visually reviewed. The final quality run measured **27.2 ms median list rendering** for 100 tasks across 10 claims (five samples); this is an environment-specific observation, not a device performance guarantee.
 
-## Not tested and remaining limitations
+Obsolete interactive Day 1 progress/task-generation tests and Documentation Assistant tests were removed/replaced because those features were explicitly removed, not because they failed. Template Library coverage remains active.
 
-- No Firefox, Safari, actual Windows/macOS browsers, physical phones, or screen-reader session was available. Responsive tests used Chromium viewports, not real devices. This is not a WCAG certification.
-- Direct `file://` launch was blocked by this managed browser's administrator policy earlier in this session. Final tests used a local static server. File-mode storage/clipboard permissions must be checked on the recipient's browser. No server is needed for application logic.
-- Browser/OS crash recovery, actual back/forward-cache restoration, private-mode lifecycle, long-term storage retention, clipboard managers, and multi-device use were not exhaustively tested. Page-departure clearing was exercised via the `pagehide` event.
-- Performance was measured with 100 tasks; 500 is the validation cap, not a performance-tested workload. Browser storage can fail or be cleared. Use a single editing tab; simultaneous writes can still race.
-- Tasks and exported backups are unencrypted. Backups are manual; import replaces instead of merging. Documentation drafts are intentionally unrecoverable, and the app cannot erase copies in the operating-system clipboard or another application.
-- The app cannot recognize confidential text or verify an employer's approval. Users must keep all examples fictional/generic and record required work in the official system manually. Dates depend on a correct device clock/time zone.
+## Remaining limits and untested areas
 
-## Day 1 checklist update
-
-The added Day 1 workflow adapts the supplied checklist into 26 generic reminders without company-specific system names or automated decision rules. Routine and conditional selections add regular workload tasks linked to a fixed fictional Practice A–F set. Completion, edits, due dates, follow-ups and backups use those same records. Repeated additions skip existing linked steps; duplicate logical links are rejected during import. Exact 24-hour timers remain the responsibility of the official system.
-
-All **five** current suites completed successfully after this update: workload, follow-ups/time zones, documentation/clipboard, quality/100-task backups, and the new checklist suite. The new suite exercises every step, conditional selection, keyboard completion, cross-view edits/status changes, deletion/re-adding, separate practice sets, refresh, metadata export/import, duplicate-link rejection, capacity without partial additions, and responsive widths through 320 px. No page errors or external requests were observed. In this full run, the quality suite measured a 38.9 ms median 100-task rebuild and a 204 ms search; environment timings vary.
-
-The new-file reminder for an injury report and the non-auto property-damage reminder are conditional and receive High priority if selected. The app collects no incident details and makes no coverage, liability, repair-authorization or recovery determinations. Completing a step does not verify employer-system work or certify the overall checklist. Existing real-device, screen-reader and file-mode testing limitations above remain applicable.
-
-## Documentation Template Library update
-
-Added 41 original, generic scenario scaffolds across the seven requested categories. Each has title/category/intended use and a complete placeholder preview. No completed activity, evidence, determination, legal standard, policy rule, deadline or escalation threshold is supplied. Coverage/liability fields remain placeholders; contact outcomes explicitly require verification. Company systems, external accounts, AI APIs and submission integrations are absent.
-
-The new responsive library preserves search/category navigation when switching templates, sorts favorite IDs first, and records the last eight successfully copied IDs. Custom definitions support create/edit/duplicate/delete with stable IDs for edits and new IDs for duplicates. They require a generic-content confirmation and two distinct placeholders; common email/phone/identifier patterns are flagged. Validation cannot semantically detect every real name, accident fact, proprietary instruction or confidential detail. Users must not save completed notes.
-
-All **six** browser suites completed successfully with the library present. After a final refinement to distinguish communication status from authorized determinations and avoid duplicate evidence fields, the affected library suite passed again. Checks include:
-
-- All 41 scenarios and exact category counts (5/7/7/5/5/6/6), title/description/readonly preview and actual clipboard write/read for every scenario.
-- Case-insensitive search, empty results, category filtering, favorite sorting/filtering/persistence, recent ID cap/order/persistence, and preserving library navigation while switching previews.
-- Custom creation, required confirmation, missing-placeholder/private-pattern validation, stable-ID edits, built-in/custom duplication, cancellation and confirmed deletion, refresh persistence and removal from favorite/recent IDs.
-- Clipboard denial with full-preview selection and no false success/recent-use claim.
-- Storage blocked at startup, simulated quota failure, and malformed stored preferences: built-ins remain usable, temporary changes are clearly identified, and unreadable data is not overwritten.
-- No persistence of unsaved editor text or the separate practice note formatter's draft; task JSON exports exclude library definitions and completed notes. Request observations showed only local assets, without entered data in URLs or request bodies.
-- Two-panel desktop and single-column mobile layout checked from 320 to 1440 px; dedicated desktop/mobile screenshots visually reviewed. Existing keyboard/label, workload, follow-up, checklist, backup and 100-task regression checks also passed. No page errors were observed.
-
-Favorites/recent IDs and deliberately saved **generic** custom definitions use a separate localStorage key. They are unencrypted, local to the browser, and not included in task backups. The library contains no private-data completion form; sensitive placeholders must be completed later in an employer-approved system. Existing Firefox/Safari, physical-device, screen-reader and direct-file-mode test limitations remain applicable. These are functional and privacy-boundary checks, not a guarantee that arbitrary custom text is free of confidential information.
+- No Firefox, Safari, actual Windows/macOS browsers, physical phones or screen-reader session was available. Responsive checks use Chromium viewports, not physical devices; no WCAG certification is claimed.
+- Direct file-mode navigation was blocked by the managed browser's administrator policy earlier in the session. Tests used a local static server. Recipient-browser file-mode storage/clipboard behavior must be checked separately.
+- Browser/OS crash recovery, actual back/forward-cache lifecycle, long-term retention/private browsing, and clipboard managers are not exhaustively tested. Reference approval cannot be verified by this app.
+- Claims/tasks and backups are unencrypted. Only employer-permitted references and generic task text belong here. The app cannot reliably detect all names or confidential facts. Custom library definitions still require generic wording; reference approval does not permit private data inside templates.
+- Backups are manual, restore replaces rather than merges, and there is no automatic sync. The v1 recovery snapshot is not kept up to date. Keep one editing tab; simultaneous writes can still race. Browser quota can be reached before nominal limits.
+- Limits are 200 claims, 500 tasks and 10 MB per imported file; performance was tested with 10 claims/100 tasks, not the full capacity. Closing retains claims instead of deleting them. Actual employer-system work, exact timed reminders and all insurance decisions remain outside the app.
+- Template Library definitions/preferences are separate and excluded from workspace JSON backups. No completed-note editor remains; unknown draft properties in imports are discarded rather than stored.

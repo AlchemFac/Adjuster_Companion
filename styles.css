@@ -69,16 +69,8 @@ footer { padding: 0 4px 28px; }
 .followup-controls select { margin-bottom: 0; }
 .followup-controls > label { flex: 1 1 180px; }
 
-.documentation-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; width: 100%; }
-.documentation-fields label:last-child { grid-column: 1 / -1; }
-.documentation-fields textarea { margin-bottom: 0; }
-#documentation-form { display: block; }
-#documentation-form[hidden], #doc-date-label[hidden] { display: none; }
 .date-toggle { display: flex; align-items: center; gap: 8px; margin: 18px 0; }
 .date-toggle input { width: auto; margin: 0; accent-color: #315e4c; }
-#doc-date-label { max-width: 260px; margin-bottom: 18px; }
-#clear-documentation { background: white; color: #315e4c; }
-@media (max-width: 560px) { .documentation-fields { grid-template-columns: 1fr; } }
 
 /* Keep the dashboard compact while making longer lists independently scrollable. */
 header, main { max-width: 1240px; }
@@ -98,7 +90,7 @@ input, select, textarea { min-width: 0; }
 .backup-controls input { max-width: 100%; }
 @media (min-width: 1100px) {
   main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; align-items: start; }
-  main > .notice, #storage-status, main > section[aria-labelledby="templates-title"], .backup-card, footer { grid-column: 1 / -1; }
+  main > .notice, #storage-status, .backup-card, footer { grid-column: 1 / -1; }
   .card { margin: 0; }
   #storage-status:empty { display: none; }
   .search-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -112,15 +104,10 @@ input, select, textarea { min-width: 0; }
 
 .day-one-card { grid-column: 1 / -1; }
 .day-one-list { max-height: 40rem; overflow-y: auto; scrollbar-gutter: stable; padding: 4px; }
-.day-one-list fieldset { min-width: 0; border: 1px solid #dce3da; border-radius: 8px; margin: 12px 0; padding: 16px; }
-.day-one-list legend { font-weight: 700; padding: 0 6px; }
 .day-one-step { padding: 12px 0; border-bottom: 1px solid #e5eae3; }
 .day-one-step:last-child { border-bottom: 0; }
-.day-one-step label { display: flex; align-items: start; gap: 10px; font-size: 1rem; }
-.day-one-step input { width: 20px; height: 20px; flex-shrink: 0; margin: 2px 0 0; accent-color: #315e4c; }
 .day-one-step p { margin: 8px 0 8px 30px; }
 .day-one-step small { display: block; margin: 8px 0 8px 30px; }
-.day-one-step button { margin-left: 30px; background: white; color: #315e4c; }
 #day-one-form select { margin-bottom: 0; }
 
 .library-card { grid-column: 1 / -1; }
@@ -147,3 +134,20 @@ input, select, textarea { min-width: 0; }
   .library-navigation { border-right: 0; border-bottom: 1px solid #dce3da; padding-right: 0; padding-bottom: 20px; }
   #library-list { max-height: 22rem; }
 }
+
+#claim-form { display: block; border-top: 1px solid #dce3da; padding-top: 20px; }
+#claim-form > label:first-child { max-width: 560px; }
+#task-form[hidden], #cancel-claim-edit[hidden] { display: none; }
+#task-form { padding: 18px; margin: 20px 0; border: 1px solid #b5c6ba; border-radius: 8px; background: #f9fbf7; }
+#task-form h3 { margin: 0; }
+.claim-card { border: 1px solid #dce3da; border-radius: 10px; margin: 14px 0; padding: 14px; }
+.claim-card summary { cursor: pointer; font-weight: 700; line-height: 1.7; overflow-wrap: anywhere; }
+.claim-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+.claim-actions button { background: white; color: #315e4c; }
+.multiline { white-space: pre-wrap; overflow-wrap: anywhere; }
+button:disabled, select:disabled { opacity: .6; cursor: default; }
+#day-one-list .day-one-step p, #day-one-list .day-one-step small { margin-left: 0; }
+
+.section-heading { display: block; }
+.date-toggle input { width: 18px; height: 18px; flex: 0 0 18px; }
+@media (max-width: 650px) { .task-actions select { width: 100%; flex-basis: 100%; } }

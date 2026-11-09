@@ -6,49 +6,64 @@
   <title>Claims Companion</title>
   <link rel="stylesheet" href="styles.css">
   <script src="checklist-data.js" defer></script>
+  <script src="workspace-data.js" defer></script>
   <script src="app.js" defer></script>
   <script src="checklist.js" defer></script>
-  <script src="documentation.js" defer></script>
   <script src="template-library-data.js" defer></script>
   <script src="template-library.js" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#tasks-title">Skip to workload</a>
-  <header><span class="eyebrow">PERSONAL WORKSPACE</span><h1>Claims Companion</h1><p>A little structure for your learning day.</p><nav aria-label="Sections"><a href="#tasks-title">Workload</a><a href="#followups-title">Follow-ups</a><a href="#day-one-title">Day 1 checklist</a><a href="#library-title">Template library</a><a href="#templates-title">Note formatter</a><a href="#backup-title">Backup</a></nav></header>
+  <header><span class="eyebrow">PERSONAL WORKSPACE</span><h1>Claims Companion</h1><p>A little structure for your learning day.</p><nav aria-label="Sections"><a href="#tasks-title">Workload</a><a href="#followups-title">Follow-ups</a><a href="#day-one-title">Day 1 checklist</a><a href="#library-title">Template library</a><a href="#backup-title">Backup</a></nav></header>
   <main>
-    <aside class="notice"><strong>Generic work only.</strong> Use fictional labels and generic tasks. Never enter customer names, claim or policy numbers, accident facts, or other confidential information. This independent tool has no connection to an insurer or its systems.</aside>
+    <aside class="notice"><strong>Generic work only.</strong> Use fictional labels and generic tasks. Use a generic claim alias unless your employer explicitly approves local storage of a claim reference. Never enter customer names, policy numbers, accident facts, or other confidential information. This independent tool has no connection to an insurer or its systems.</aside>
     <p id="storage-status" role="status"></p>
     <section class="card" aria-labelledby="tasks-title">
       <div class="section-heading"><div><span class="eyebrow">KEEP THINGS MOVING</span><h2 id="tasks-title" tabindex="-1">Workload management</h2></div><p id="task-count"></p></div>
       <div class="summary" aria-label="Workload summary" aria-live="polite">
         <div><strong id="active-count">0</strong><span>Active tasks</span></div>
-        <div><strong id="today-count">0</strong><span>Due today / follow-ups</span></div>
-        <div><strong id="overdue-count">0</strong><span>Overdue / follow-ups</span></div>
+        <div><strong id="today-count">0</strong><span>Tasks due today</span></div>
+        <div><strong id="overdue-count">0</strong><span>Overdue tasks</span></div>
         <div><strong id="completed-count">0</strong><span>Completed today</span></div>
+        <div><strong id="followup-overdue-count">0</strong><span>Overdue follow-ups</span></div>
+        <div><strong id="followup-today-count">0</strong><span>Follow-ups due today</span></div>
       </div>
-      <form id="task-form">
+      <p class="muted">Dashboard counts cover open claims only, independent of filters or collapsed cards. Closing a claim retains its tasks and removes it from dashboard counts and follow-up lists.</p>
+      <form id="claim-form" aria-describedby="claim-privacy">
+        <label>Claim label / employer-approved reference<input id="claim-reference" required maxlength="80" placeholder="For example: Practice 01" autocomplete="off"></label>
+        <label class="date-toggle"><input id="claim-approval" type="checkbox" required> This is a generic alias, or my employer permits this reference to be stored locally.</label>
+        <div class="form-actions"><button id="save-claim" type="submit">Create claim</button><button id="cancel-claim-edit" type="button" hidden>Cancel rename</button></div>
+      </form>
+      <p id="claim-privacy" class="muted">Browser storage and JSON backups are unencrypted. Do not enter customer names, case facts, or unapproved identifiers. Your confirmation does not verify employer approval.</p>
+      <p id="claim-feedback" role="status"></p>
+      <form id="task-form" hidden>
+        <h3 class="wide">Add or edit a task</h3>
+        <label class="wide">Claim<select id="task-claim" required></select></label>
         <label class="wide">Generic task <input id="task-title" required maxlength="120" placeholder="For example: Review training checklist" autocomplete="off"></label>
-        <label>Category <select id="task-category"><option>Training</option><option>Follow-up</option><option>Documentation</option><option>Planning</option><option>Other</option></select></label>
+        <label>Category <select id="task-category"></select></label>
         <label>Priority <select id="task-priority"><option>High</option><option selected>Medium</option><option>Low</option></select></label>
-        <label>Due / follow-up date (optional) <input id="task-date" type="date"></label>
+        <label>Due date <input id="task-date" type="date" required></label>
+        <label>Follow-up date (optional) <input id="task-followup-date" type="date"></label>
         <label>Status <select id="task-status"><option>Not Started</option><option>In Progress</option><option>Waiting</option><option>Completed</option></select></label>
         <label>Waiting on (optional, category only) <select id="task-waiting-on"><option value="">Not specified</option><option>Customer</option><option>Repair Shop</option><option>Internal Review</option><option>Other Insurer</option><option>Other</option></select></label>
-        <label class="wide">Generic next action (optional) <input id="task-next-action" maxlength="200" placeholder="For example: Review the practice outline" autocomplete="off"></label>
-        <div class="form-actions"><button id="save-task" type="submit">Add task</button><button id="cancel-edit" type="button" hidden>Cancel edit</button></div>
+        <label class="wide">Task description (optional)<textarea id="task-description" rows="3" maxlength="2000" autocomplete="off" placeholder="Generic task details only; no case facts"></textarea></label>
+        <label class="wide">Next steps (optional)<textarea id="task-next-action" rows="3" maxlength="2000" autocomplete="off" placeholder="Generic next steps, one per line"></textarea></label>
+        <div class="form-actions"><button id="save-task" type="submit">Add task</button><button id="cancel-edit" type="button" hidden>Cancel</button></div>
       </form>
       <p id="task-feedback" role="status"></p>
       <div class="filters" role="group" aria-label="Filter tasks"><button type="button" data-filter="all" aria-pressed="true">All</button><button type="button" data-filter="open" aria-pressed="false">Open</button><button type="button" data-filter="due" aria-pressed="false">Due</button></div>
+      <label>Show claims<select id="claim-filter"><option>Open</option><option>Closed</option><option>All</option></select></label>
       <div class="search-filters">
-        <label>Search tasks <input id="task-search" type="search" placeholder="Title, category, or next action" maxlength="200"></label>
+        <label>Search tasks <input id="task-search" type="search" placeholder="Claim, title, description, or next steps" maxlength="200"></label>
         <label>Filter priority <select id="priority-filter"><option value="">All priorities</option><option>High</option><option>Medium</option><option>Low</option></select></label>
         <label>Filter status <select id="status-filter"><option value="">All statuses</option><option>Not Started</option><option>In Progress</option><option>Waiting</option><option>Completed</option></select></label>
       </div>
       <p class="muted">Active tasks appear first: overdue, due today, then upcoming. Undated and completed tasks follow. Counts include all tasks, regardless of filters.</p>
-      <ul id="task-list" tabindex="0" aria-label="Workload task list"></ul><p id="empty-tasks" class="muted">A clear slate. Add a generic task to get started.</p>
+      <div id="task-list" tabindex="0" role="region" aria-label="Claims and tasks"></div><p id="empty-tasks" class="muted">A clear slate. Add a generic task to get started.</p>
     </section>
     <section class="card" aria-labelledby="followups-title">
       <span class="eyebrow">CLOSE THE LOOP</span><h2 id="followups-title" tabindex="-1">Follow-up tracking</h2>
-      <p class="muted">Follow-ups use the same task and due date as Workload Management. Change either date to update both. Waiting tasks appear only under Waiting; their dates still count toward overdue and due-today totals. Completed tasks remain in Workload Management.</p>
+      <p class="muted">Follow-ups use the optional follow-up date, independently of the task due date. Only incomplete tasks with a follow-up date in an open claim appear here. Waiting tasks appear once under Waiting and still count toward follow-up totals.</p>
       <p class="notice"><strong>End-of-day reminder:</strong> Before finishing your day, verify that required follow-ups have been recorded in your employer’s official system. This personal checklist does not replace that system.</p>
       <p id="followup-feedback" role="status"></p>
       <div class="followup-groups" tabindex="0" role="region" aria-label="Follow-up groups">
@@ -60,16 +75,9 @@
     </section>
     <section class="card day-one-card" aria-labelledby="day-one-title">
       <span class="eyebrow">GUIDED WORKFLOW</span><h2 id="day-one-title" tabindex="-1">Day 1 checklist</h2>
-      <p class="muted">A generic companion to your new-file checklist. Use a fictional practice set, select applicable steps, and add them to Workload. Checklist progress, workload status, follow-ups and backups all use the same task records. Completion only records your checkmark; it does not verify official-system work or authorize a decision.</p>
+      <p class="muted">Read-only reference for the Day 1 workflow. It does not create tasks, record completion, or change any claim. Add applicable tasks yourself inside the claim. Verify official-system work and current employer procedures.</p>
       <p class="notice"><strong>Supervisor review:</strong> If any party reports injury, review promptly with your supervisor for proper triage—do not wait. Review non-auto property damage with your supervisor. Follow current employer procedures; this app sends no alerts or messages.</p>
-      <form id="day-one-form" aria-describedby="day-one-help">
-        <label>Fictional practice set <select id="day-one-set"><option>Practice A</option><option>Practice B</option><option>Practice C</option><option>Practice D</option><option>Practice E</option><option>Practice F</option></select></label>
-        <label>Date for newly added steps <input id="day-one-date" type="date" required></label>
-        <button type="submit">Add selected missing steps</button>
-      </form>
-      <p class="muted" id="day-one-help">Keep names, claim identifiers and case facts out of this app. Default selections cover routine review; select conditional steps only when applicable. The chosen date applies only to new tasks. Set exact 24-hour reminders in the official system; calendar dates here are not elapsed-time alerts.</p>
-      <p id="day-one-progress" role="status"></p><p id="day-one-feedback" role="status"></p>
-      <div id="day-one-list" class="day-one-list" tabindex="0" role="region" aria-label="Day 1 checklist steps"></div>
+      <div id="day-one-list" class="day-one-list" tabindex="0" role="region" aria-label="Day 1 reference checklist"></div>
     </section>
     <section class="card library-card" aria-labelledby="library-title">
       <span class="eyebrow">REUSABLE WORDING</span><h2 id="library-title" tabindex="-1">Documentation Templates</h2>
@@ -107,30 +115,14 @@
         </div>
       </div>
     </section>
-    <section class="card" aria-labelledby="templates-title">
-      <span class="eyebrow">MAKE A START</span><h2 id="templates-title" tabindex="-1">Documentation Assistant · practice note formatter</h2>
-      <p class="notice" id="documentation-warning"><strong>Fictional practice only.</strong> Do not enter real claim or customer information without employer approval. Never include names, claim or policy numbers, accident facts, or other confidential details here. This tool only formats what you type; it does not make coverage, liability, settlement, or payment decisions.</p>
-      <p class="muted" id="documentation-help">Drafts are not saved or sent anywhere. Changing templates, clearing the form, or leaving this page clears the draft. Review the preview before copying. Copying places text on your system clipboard.</p>
-      <label>Template <select id="template-select">
-        <optgroup label="Documentation"><option value="customer-contact">Customer contact</option><option value="contact-attempt">Contact attempt</option><option value="investigation-update">Investigation update</option><option value="repair-followup">Repair estimate follow-up</option><option value="general-followup">General follow-up</option></optgroup>
-        <optgroup label="Learning outlines"><option value="daily">Daily learning plan</option><option value="followup">Generic follow-up checklist</option><option value="practice">Practice documentation outline</option></optgroup>
-      </select></label>
-      <form id="documentation-form" autocomplete="off" aria-describedby="documentation-warning documentation-help">
-        <div id="documentation-fields" class="documentation-fields"></div>
-        <label class="date-toggle"><input id="include-doc-date" type="checkbox"> Include a follow-up date</label>
-        <label id="doc-date-label" hidden>Follow-up date <input id="doc-date" type="date"></label>
-      </form>
-      <label>Formatted text preview <textarea id="template-preview" rows="14" readonly autocomplete="off" spellcheck="false"></textarea></label>
-      <div class="form-actions"><button id="copy-template" type="button">Copy to Clipboard</button><button id="clear-documentation" type="button">Clear Form</button></div><p id="copy-status" role="status"></p>
-    </section>
     <section class="card backup-card" aria-labelledby="backup-title">
-      <h2 id="backup-title" tabindex="-1">Task backup</h2>
-      <p id="backup-help" class="muted">Export tasks to a local JSON file before clearing browser data or changing computers. Import replaces all tasks after confirmation. Files are unencrypted; keep only generic tasks. Documentation drafts are never included. Maximum 500 tasks / 1 MB.</p>
-      <div class="backup-controls"><button id="export-tasks" type="button">Export tasks (JSON)</button><label>Import task backup (JSON)<input id="import-tasks" type="file" accept=".json,application/json" aria-describedby="backup-help"></label></div>
+      <h2 id="backup-title" tabindex="-1">Claim and task backup</h2>
+      <p id="backup-help" class="muted">Export claims and tasks before clearing browser data or changing computers. Import replaces both together after confirmation. Files are unencrypted: include only permitted references and generic task information. Older task backups import into Existing work. Maximum 200 claims / 500 tasks / 10 MB. Template Library preferences are separate and are not included.</p>
+      <div class="backup-controls"><button id="export-tasks" type="button">Export claims and tasks (JSON)</button><label>Import workspace backup (JSON)<input id="import-tasks" type="file" accept=".json,application/json" aria-describedby="backup-help"></label></div>
       <p id="backup-status" role="status"></p>
-      <button id="clear-data" type="button" class="danger">Delete all saved tasks</button>
+      <button id="clear-data" type="button" class="danger">Delete all claims and tasks</button>
     </section>
-    <footer><p>Tasks stay in this browser profile on this site. No automatic backup or sync; clearing browser data removes them. Other people using this profile may see them. No account or backend is required.</p></footer>
+    <footer><p>Claims and tasks stay in this browser profile on this site. No automatic backup or sync; clearing browser data removes them. Other people using this profile may see them. No account or backend is required.</p></footer>
   </main>
 </body>
 </html>

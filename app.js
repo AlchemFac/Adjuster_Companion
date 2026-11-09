@@ -1,374 +1,293 @@
 'use strict';
 
-const STORAGE_KEY = 'claims-companion.tasks.v1';
-const MAX_TASKS = 500;
-const $ = (selector) => document.querySelector(selector);
-let tasks = [];
-let filter = 'all';
-let editingId = null;
-const PRIORITIES = ['High', 'Medium', 'Low'];
-const STATUSES = ['Not Started', 'In Progress', 'Waiting', 'Completed'];
-const WAITING_ON = ['', 'Customer', 'Repair Shop', 'Internal Review', 'Other Insurer', 'Other'];
-const CATEGORIES = ['Training', 'Follow-up', 'Documentation', 'Planning', 'Other'];
+const STORAGE_KEY = 'claims-companion.workspace.v2';
+const LEGACY_STORAGE_KEY = 'claims-companion.tasks.v1';
+const $ = selector => document.querySelector(selector);
+let claims = [], tasks = [];
+let editingId = null, editingClaimId = null, filter = 'all';
 let persistenceEnabled = true;
-
-function validDate(value) {
-  if (value === '') return true;
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-  const date = new Date(`${value}T12:00:00Z`);
-  return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value;
-}
-function validTask(task) {
-  return task && typeof task.id === 'string' && task.id.length > 0 && task.id.length <= 100 &&
-    typeof task.title === 'string' && task.title.trim().length > 0 && task.title.length <= 120 &&
-    typeof task.done === 'boolean' && typeof task.date === 'string' && validDate(task.date) &&
-    (task.checklist === undefined || validDayOneLink(task.checklist)) &&
-    (task.waitingOn === undefined || WAITING_ON.includes(task.waitingOn)) &&
-    (task.category === undefined || CATEGORIES.includes(task.category)) &&
-    (task.priority === undefined || PRIORITIES.includes(task.priority)) &&
-    (task.status === undefined || (STATUSES.includes(task.status) && task.done === (task.status === 'Completed'))) &&
-    (task.nextAction === undefined || (typeof task.nextAction === 'string' && task.nextAction.length <= 200)) &&
-    (task.completedOn === undefined || (typeof task.completedOn === 'string' && validDate(task.completedOn)));
-}
-// Only known task fields may reach persistent storage or backups.
-function normalizeTask(task) {
-  return { id: task.id, title: task.title, date: task.date, done: task.done,
-    category: task.category ?? 'Training', priority: task.priority ?? 'Medium',
-    status: task.status ?? (task.done ? 'Completed' : 'Not Started'),
-    nextAction: task.nextAction ?? '', waitingOn: task.waitingOn ?? '',
-    completedOn: task.done ? (task.completedOn ?? '') : '',
-    ...(task.checklist ? { checklist: { type: 'day-one', set: task.checklist.set, step: task.checklist.step } } : {}) };
-}
-function validTaskList(data) {
-  return Array.isArray(data) && data.length <= MAX_TASKS && data.every(validTask) &&
-    new Set(data.map(t => t.id)).size === data.length &&
-    new Set(data.filter(t => t.checklist).map(t => `${t.checklist.set}:${t.checklist.step}`)).size === data.filter(t => t.checklist).length;
-}
-function loadTasks() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw === null) return;
-    const data = JSON.parse(raw);
-    if (!validTaskList(data)) throw new Error('Invalid data');
-    tasks = data.map(normalizeTask);
-  } catch {
-    persistenceEnabled = false;
-    $('#storage-status').textContent = 'Saved tasks could not be read. Existing storage has been left untouched. New tasks are temporary until you delete saved tasks below or resolve browser storage access.';
-  }
-}
-function saveTasks() {
-  if (!persistenceEnabled) return;
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
-    $('#storage-status').textContent = '';
-  } catch {
-    $('#storage-status').textContent = 'Changes are only in memory: browser storage is unavailable or full. They may be lost when this page closes. Try again after freeing storage.';
-  }
-}
+const expandedClaims = new Set();
+function workspace() { return { version: 2, claims, tasks }; }
 function today() {
   const date = new Date();
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
+function saveTasks() {
+  if (!persistenceEnabled) return;
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(workspace())); $('#storage-status').textContent = ''; }
+  catch { $('#storage-status').textContent = 'Changes are only in memory: browser storage is unavailable or full. Export a backup before closing; changes may be lost on reload.'; }
+}
+function loadWorkspace() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw !== null) {
+      const data = normalizeWorkspace(JSON.parse(raw)); claims = data.claims; tasks = data.tasks;
+    } else {
+      const legacy = localStorage.getItem(LEGACY_STORAGE_KEY);
+      if (legacy !== null) {
+        const data = migrateLegacyTasks(JSON.parse(legacy)); claims = data.claims; tasks = data.tasks;
+        saveTasks();
+        $('#claim-feedback').textContent = 'Existing tasks moved into Existing work. Their former shared date was preserved as both due and follow-up dates; you can now change either independently.';
+      }
+    }
+    if (claims[0]) expandedClaims.add(claims[0].id);
+  } catch {
+    persistenceEnabled = false;
+    $('#storage-status').textContent = 'Saved work could not be read. Existing storage is untouched. Changes are temporary until you resolve storage access or clear saved work below.';
+  }
+}
+function claimFor(task) { return claims.find(c => c.id === task.claimId); }
+function openTasks() { const ids = new Set(claims.filter(c => c.status === 'Open').map(c => c.id)); return tasks.filter(t => ids.has(t.claimId)); }
 function setStatus(task, status) {
   if (status === 'Completed' && !task.done) task.completedOn = today();
   if (status !== 'Completed') task.completedOn = '';
-  task.status = status;
-  task.done = status === 'Completed';
+  task.status = status; task.done = status === 'Completed';
 }
-function resetEditor() {
-  editingId = null;
-  $('#task-form').reset();
-  $('#task-title').setCustomValidity('');
-  $('#save-task').textContent = 'Add task';
-  $('#cancel-edit').hidden = true;
+function resetEditor(claimId = $('#task-claim').value) {
+  editingId = null; $('#task-form').reset(); $('#task-date').required = true; $('#task-title').setCustomValidity('');
+  $('#task-claim').value = claimId; $('#save-task').textContent = 'Add task'; $('#cancel-edit').hidden = false;
 }
 function editTask(task) {
   editingId = task.id;
+  $('#task-form').hidden = false;
   $('#task-title').setCustomValidity('');
-  $('#task-title').value = task.title;
-  $('#task-category').value = task.category;
-  $('#task-priority').value = task.priority;
-  $('#task-date').value = task.date;
-  $('#task-status').value = task.status;
-  $('#task-waiting-on').value = task.waitingOn;
-  $('#task-next-action').value = task.nextAction;
-  $('#save-task').textContent = 'Save changes';
-  $('#cancel-edit').hidden = false;
-  $('#task-feedback').textContent = 'Editing task. Save changes or cancel.';
+  for (const [selector, value] of [ ['#task-claim', task.claimId], ['#task-title', task.title], ['#task-description', task.description],
+    ['#task-category', task.category], ['#task-priority', task.priority], ['#task-date', task.date], ['#task-followup-date', task.followUpDate],
+    ['#task-status', task.status], ['#task-waiting-on', task.waitingOn], ['#task-next-action', task.nextAction] ]) $(selector).value = value;
+  // Undated migrated tasks can retain their due date; new tasks require one.
+  $('#task-date').required = !!task.date;
+  $('#save-task').textContent = 'Save changes'; $('#cancel-edit').hidden = false; $('#task-title').focus();
+}
+function prepareTask(claim) {
+  resetEditor(claim.id); $('#task-date').required = true; $('#task-form').hidden = false;
   $('#task-title').focus();
 }
-function render({ followups = true } = {}) {
-  const list = $('#task-list');
-  list.replaceChildren();
-  const localToday = today();
-  const priority = $('#priority-filter').value;
-  const status = $('#status-filter').value;
-  const search = $('#task-search').value.trim().toLocaleLowerCase();
-  const rank = task => task.done ? 4 : !task.date ? 3 : task.date < localToday ? 0 : task.date === localToday ? 1 : 2;
-  const visible = tasks.filter(t =>
-    (filter === 'all' || (filter === 'open' && !t.done) || (filter === 'done' && t.done) || (filter === 'due' && !t.done && t.date && t.date <= localToday)) &&
-    (!priority || t.priority === priority) && (!status || t.status === status) &&
-    (!search || `${t.title} ${t.category} ${t.nextAction}`.toLocaleLowerCase().includes(search))
-  ).sort((a, b) => rank(a) - rank(b) || a.date.localeCompare(b.date));
-  visible.forEach(task => {
-    const row = document.createElement('li');
-    row.className = `task${task.done ? ' completed' : ''}`;
-    const check = document.createElement('input');
-    check.type = 'checkbox';
-    check.checked = task.done;
-    check.id = `task-${task.id}`;
-    check.setAttribute('aria-label', `${task.done ? 'Reopen' : 'Complete'} task: ${task.title}`);
-    check.addEventListener('change', () => {
-      setStatus(task, check.checked ? 'Completed' : 'Not Started');
-      if (editingId === task.id) $('#task-status').value = task.status;
-      saveTasks(); render();
-      const replacement = document.getElementById(check.id);
-      (replacement || $('#task-title')).focus();
-    });
-    const details = document.createElement('div');
-    details.className = 'task-details';
-    const label = document.createElement('label');
-    label.htmlFor = check.id;
-    label.textContent = task.title;
-    const meta = document.createElement('small');
-    meta.textContent = `${task.category} · ${task.priority} priority${task.waitingOn ? ` · Waiting on: ${task.waitingOn}` : ''}`;
-    details.append(label, meta);
-    const date = document.createElement('small');
-    const overdue = !task.done && task.date && task.date < localToday;
-    date.textContent = task.date ? `${overdue ? 'Overdue' : !task.done && task.date === localToday ? 'Due today' : 'Due'}: ${task.date}` : 'No due date';
-    if (overdue) date.className = 'overdue';
-    details.append(date);
-    if (task.nextAction) {
-      const next = document.createElement('small');
-      next.textContent = `Next: ${task.nextAction}`;
-      details.append(next);
-    }
-    const actions = document.createElement('div');
-    actions.className = 'task-actions';
-    const statusSelect = document.createElement('select');
-    statusSelect.id = `status-${task.id}`;
-    statusSelect.setAttribute('aria-label', `Status for ${task.title}`);
-    STATUSES.forEach(status => {
-      const option = document.createElement('option');
-      option.value = status; option.textContent = status;
-      statusSelect.append(option);
-    });
-    statusSelect.value = task.status;
-    statusSelect.addEventListener('change', () => {
-      setStatus(task, statusSelect.value);
-      if (editingId === task.id) $('#task-status').value = task.status;
-      saveTasks(); render();
-      (document.getElementById(statusSelect.id) || $('#task-title')).focus();
-      $('#task-feedback').textContent = 'Task status updated.';
-    });
-    const edit = document.createElement('button');
-    edit.type = 'button'; edit.textContent = 'Edit';
-    edit.setAttribute('aria-label', `Edit task: ${task.title}`);
-    edit.addEventListener('click', () => editTask(task));
-    const remove = document.createElement('button');
-    remove.type = 'button'; remove.textContent = 'Delete';
-    remove.className = 'danger';
-    remove.setAttribute('aria-label', `Delete task: ${task.title}`);
-    remove.addEventListener('click', () => {
-      tasks = tasks.filter(t => t.id !== task.id);
-      if (editingId === task.id) resetEditor();
-      saveTasks(); render();
-      $('#task-feedback').textContent = 'Task deleted.';
-      $('#task-title').focus();
-    });
-    actions.append(statusSelect, edit, remove);
-    row.append(check, details, actions);
-    list.append(row);
+function resetClaimEditor() { editingClaimId = null; $('#claim-form').reset(); $('#save-claim').textContent = 'Create claim'; $('#cancel-claim-edit').hidden = true; }
+function renderClaimOptions() {
+  const previous = $('#task-claim').value;
+  $('#task-claim').replaceChildren();
+  claims.forEach(claim => {
+    const option = document.createElement('option'); option.value = claim.id;
+    option.textContent = `${claim.reference}${claim.status === 'Closed' ? ' (closed)' : ''}`;
+    $('#task-claim').append(option);
   });
-  if (followups) renderFollowups(localToday);
-  if (typeof renderDayOneChecklist === 'function') renderDayOneChecklist();
-  $('#active-count').textContent = tasks.filter(t => !t.done).length;
-  $('#today-count').textContent = tasks.filter(t => !t.done && t.date === localToday).length;
-  $('#overdue-count').textContent = tasks.filter(t => !t.done && t.date && t.date < localToday).length;
-  $('#completed-count').textContent = tasks.filter(t => t.done && t.completedOn === localToday).length;
-  $('#task-count').textContent = `${visible.length} shown · ${tasks.length} total`;
-  $('#empty-tasks').hidden = visible.length > 0;
-  $('#empty-tasks').textContent = tasks.length ? 'No tasks match this filter.' : 'A clear slate. Add a generic task to get started.';
+  $('#task-claim').value = claims.some(c => c.id === previous) ? previous : (claims.find(c => c.status === 'Open')?.id || claims[0]?.id || '');
+  if (!claims.length) $('#task-form').hidden = true;
 }
-function renderFollowups(localToday) {
-  const active = tasks.filter(task => !task.done);
+function button(text, label, action) {
+  const element = document.createElement('button'); element.type = 'button'; element.textContent = text;
+  if (label) element.setAttribute('aria-label', label);
+  element.addEventListener('click', action); return element;
+}
+function focusTaskControl(task, id) {
+  (document.getElementById(id) || document.getElementById(`claim-${task.claimId}`)?.querySelector('summary') || $('#tasks-title')).focus();
+}
+function renderTaskRow(task, claim) {
+  const row = document.createElement('li'); row.className = `task${task.done ? ' completed' : ''}`;
+  const closed = claim.status === 'Closed';
+  const check = document.createElement('input'); check.type = 'checkbox'; check.checked = task.done; check.disabled = closed;
+  check.id = `task-${task.id}`; check.setAttribute('aria-label', `${task.done ? 'Reopen' : 'Complete'} task: ${task.title}`);
+  check.addEventListener('change', () => {
+    setStatus(task, check.checked ? 'Completed' : 'Not Started');
+    if (editingId === task.id) $('#task-status').value = task.status;
+    saveTasks(); render(); focusTaskControl(task, check.id);
+  });
+  const details = document.createElement('div'); details.className = 'task-details';
+  const label = document.createElement('label'); label.htmlFor = check.id; label.textContent = task.title; details.append(label);
+  const line = (text, className = '') => { const small = document.createElement('small'); small.textContent = text; small.className = className; details.append(small); };
+  line(`${task.category} · ${task.priority} priority${task.waitingOn ? ` · Waiting on: ${task.waitingOn}` : ''}`);
+  if (task.description) line(task.description, 'multiline');
+  const overdue = !task.done && task.date && task.date < today();
+  line(task.date ? `${overdue ? 'Overdue' : 'Due'}: ${task.date}` : 'No due date', overdue ? 'overdue' : '');
+  if (task.followUpDate) line(`Follow up: ${task.followUpDate}`);
+  if (task.nextAction) line(`Next steps: ${task.nextAction}`, 'multiline');
+  const actions = document.createElement('div'); actions.className = 'task-actions';
+  const status = document.createElement('select'); status.id = `status-${task.id}`; status.disabled = closed;
+  status.setAttribute('aria-label', `Status for ${task.title}`);
+  STATUSES.forEach(value => { const option = document.createElement('option'); option.textContent = value; status.append(option); });
+  status.value = task.status;
+  status.addEventListener('change', () => {
+    setStatus(task, status.value); if (editingId === task.id) $('#task-status').value = task.status;
+    saveTasks(); render(); focusTaskControl(task, status.id);
+  });
+  const edit = button('Edit', `Edit task: ${task.title}`, () => editTask(task)); edit.disabled = closed;
+  const remove = button('Delete', `Delete task: ${task.title}`, () => {
+    tasks = tasks.filter(t => t.id !== task.id); if (editingId === task.id) resetEditor(); saveTasks(); render();
+    $('#task-feedback').textContent = 'Task deleted.'; focusTaskControl(task, '');
+  }); remove.className = 'danger'; remove.disabled = closed;
+  actions.append(status, edit, remove); row.append(check, details, actions); return row;
+}
+function render({ followups = true } = {}) {
+  renderClaimOptions();
+  const priority = $('#priority-filter').value, status = $('#status-filter').value;
+  const search = $('#task-search').value.trim().toLocaleLowerCase(), scope = $('#claim-filter').value;
+  const rank = t => t.done ? 4 : !t.date ? 3 : t.date < today() ? 0 : t.date === today() ? 1 : 2;
+  const matches = t => (filter === 'all' || (filter === 'open' && !t.done) || (filter === 'due' && !t.done && t.date && t.date <= today())) &&
+    (!priority || t.priority === priority) && (!status || t.status === status) &&
+    (!search || `${claimFor(t).reference} ${t.title} ${t.description} ${t.category} ${t.nextAction}`.toLocaleLowerCase().includes(search));
+  const container = $('#task-list'); container.replaceChildren();
+  let shown = 0;
+  claims.filter(c => scope === 'All' || c.status === scope).forEach(claim => {
+    const all = tasks.filter(t => t.claimId === claim.id);
+    const visible = all.filter(matches).sort((a, b) => rank(a) - rank(b) || a.date.localeCompare(b.date));
+    if (search && !visible.length && !claim.reference.toLocaleLowerCase().includes(search)) return;
+    shown += visible.length;
+    const card = document.createElement('details'); card.className = 'claim-card'; card.dataset.claimId = claim.id; card.id = `claim-${claim.id}`;
+    card.open = expandedClaims.has(claim.id);
+    const summary = document.createElement('summary');
+    summary.textContent = `${claim.reference} · ${claim.status} · ${all.filter(t => !t.done).length} active / ${all.length} ${all.length === 1 ? 'task' : 'tasks'}`;
+    card.append(summary);
+    card.addEventListener('toggle', () => {
+      if (!card.isConnected) return;
+      if (card.open) expandedClaims.add(claim.id); else expandedClaims.delete(claim.id);
+    });
+    const actions = document.createElement('div'); actions.className = 'claim-actions';
+    const add = button('Add task', `Add task to ${claim.reference}`, () => prepareTask(claim)); add.disabled = claim.status === 'Closed';
+    const rename = button('Rename', `Rename claim: ${claim.reference}`, () => {
+      editingClaimId = claim.id; $('#claim-reference').value = claim.reference; $('#claim-approval').checked = false;
+      $('#save-claim').textContent = 'Save claim label'; $('#cancel-claim-edit').hidden = false; $('#claim-reference').focus();
+    });
+    const close = button(claim.status === 'Open' ? 'Close claim' : 'Reopen claim', `${claim.status === 'Open' ? 'Close' : 'Reopen'} claim: ${claim.reference}`, () => {
+      claim.status = claim.status === 'Open' ? 'Closed' : 'Open'; saveTasks(); render();
+      $('#claim-feedback').textContent = `${claim.reference} is ${claim.status.toLowerCase()}. Tasks are retained. Closed claims are excluded from dashboard and follow-ups.`; $('#claim-filter').focus();
+    });
+    actions.append(add, rename, close); card.append(actions);
+    const list = document.createElement('ul'); list.className = 'claim-tasks';
+    visible.forEach(task => list.append(renderTaskRow(task, claim)));
+    if (!visible.length) { const empty = document.createElement('li'); empty.className = 'muted'; empty.textContent = all.length ? 'No tasks match these filters.' : 'No tasks yet. Add a task to this claim.'; list.append(empty); }
+    card.append(list); container.append(card);
+  });
+  const open = openTasks(); const day = today();
+  $('#active-count').textContent = open.filter(t => !t.done).length;
+  $('#today-count').textContent = open.filter(t => !t.done && t.date === day).length;
+  $('#overdue-count').textContent = open.filter(t => !t.done && t.date && t.date < day).length;
+  $('#completed-count').textContent = open.filter(t => t.done && t.completedOn === day).length;
+  $('#followup-overdue-count').textContent = open.filter(t => !t.done && t.followUpDate && t.followUpDate < day).length;
+  $('#followup-today-count').textContent = open.filter(t => !t.done && t.followUpDate === day).length;
+  $('#task-count').textContent = `${shown} ${shown === 1 ? 'task' : 'tasks'} shown · ${tasks.length} ${tasks.length === 1 ? 'task' : 'tasks'} / ${claims.length} ${claims.length === 1 ? 'claim' : 'claims'} total`;
+  $('#empty-tasks').hidden = container.children.length > 0;
+  $('#empty-tasks').textContent = claims.length ? 'No claims match. Change the claim filter or search.' : 'Create a claim to get started.';
+  if (followups) renderFollowups(day);
+}
+function renderFollowups(day) {
   const groups = { overdue: [], today: [], upcoming: [], waiting: [] };
-  active.forEach(task => {
-    if (task.status === 'Waiting') groups.waiting.push(task);
-    else if (task.date) groups[task.date < localToday ? 'overdue' : task.date === localToday ? 'today' : 'upcoming'].push(task);
+  openTasks().filter(t => !t.done && t.followUpDate).forEach(t => {
+    groups[t.status === 'Waiting' ? 'waiting' : t.followUpDate < day ? 'overdue' : t.followUpDate === day ? 'today' : 'upcoming'].push(t);
   });
   Object.entries(groups).forEach(([group, records]) => {
-    const list = $(`#followup-${group}`);
-    list.replaceChildren();
-    records.sort((a, b) => (a.date || '9999-12-31').localeCompare(b.date || '9999-12-31')).forEach(task => {
-      const overdue = task.date && task.date < localToday;
-      const row = document.createElement('li');
-      row.className = `followup-row${overdue ? ' is-overdue' : ''}`;
-      const details = document.createElement('div');
-      details.className = 'task-details';
-      const title = document.createElement('strong');
-      title.textContent = task.title;
-      const date = document.createElement('p');
-      date.className = overdue ? 'overdue' : 'muted';
-      date.textContent = !task.date ? 'No follow-up date set' : `${overdue ? 'Overdue' : task.date === localToday ? 'Due today' : 'Upcoming'}: ${task.date}`;
-      details.append(title, date);
-      if (task.nextAction) {
-        const next = document.createElement('p'); next.textContent = `Next: ${task.nextAction}`; details.append(next);
-      }
-      const controls = document.createElement('div');
-      controls.className = 'followup-controls';
-      const dateForm = document.createElement('form');
-      const dateLabel = document.createElement('label');
-      dateLabel.textContent = 'Follow-up date';
-      const input = document.createElement('input');
-      input.type = 'date'; input.value = task.date; input.id = `followup-date-${task.id}`;
-      input.setAttribute('aria-label', `Follow-up date for ${task.title}`);
-      dateLabel.append(input);
-      const save = document.createElement('button');
-      save.type = 'submit'; save.textContent = 'Save date';
-      save.setAttribute('aria-label', `Save follow-up date for ${task.title}`);
-      dateForm.append(dateLabel, save);
-      dateForm.addEventListener('submit', event => {
-        event.preventDefault();
-        if (!validDate(input.value)) { input.reportValidity(); return; }
-        task.date = input.value;
-        if (editingId === task.id) $('#task-date').value = task.date;
-        saveTasks(); render();
-        $('#followup-feedback').textContent = task.date ? `Follow-up date saved: ${task.date}.` : 'Follow-up date cleared. The task remains in Workload Management.';
+    const list = $(`#followup-${group}`); list.replaceChildren();
+    records.sort((a, b) => a.followUpDate.localeCompare(b.followUpDate)).forEach(task => {
+      const row = document.createElement('li'); row.className = `followup-row${task.followUpDate < day ? ' is-overdue' : ''}`;
+      const title = document.createElement('strong'); title.textContent = task.title;
+      const context = document.createElement('p'); context.textContent = `Claim: ${claimFor(task).reference}`;
+      const date = document.createElement('p'); date.className = task.followUpDate < day ? 'overdue' : '';
+      date.textContent = `${task.followUpDate < day ? 'Overdue' : task.followUpDate === day ? 'Due today' : 'Upcoming'}: ${task.followUpDate}`;
+      row.append(title, context, date);
+      if (task.waitingOn) { const waiting = document.createElement('p'); waiting.textContent = `Waiting on: ${task.waitingOn}`; row.append(waiting); }
+      if (task.nextAction) { const next = document.createElement('p'); next.className = 'multiline'; next.textContent = `Next steps: ${task.nextAction}`; row.append(next); }
+      const controls = document.createElement('div'); controls.className = 'followup-controls';
+      const form = document.createElement('form');
+      const label = document.createElement('label'); label.textContent = 'Follow-up date';
+      const input = document.createElement('input'); input.type = 'date'; input.value = task.followUpDate; input.id = `followup-date-${task.id}`;
+      input.setAttribute('aria-label', `Follow-up date for ${task.title}`); label.append(input);
+      const save = document.createElement('button'); save.type = 'submit'; save.textContent = 'Save date'; save.setAttribute('aria-label', `Save follow-up date for ${task.title}`);
+      form.append(label, save); form.addEventListener('submit', event => {
+        event.preventDefault(); if (!validDate(input.value)) return;
+        task.followUpDate = input.value; if (editingId === task.id) $('#task-followup-date').value = task.followUpDate;
+        saveTasks(); render(); $('#followup-feedback').textContent = 'Follow-up date updated. The task due date is unchanged.';
         (document.getElementById(input.id) || $('#followups-title')).focus();
       });
-      const waitingLabel = document.createElement('label');
-      waitingLabel.textContent = 'Waiting on (category only)';
-      const waiting = document.createElement('select');
-      waiting.id = `waiting-${task.id}`;
-      waiting.setAttribute('aria-label', `Waiting on for ${task.title}`);
-      WAITING_ON.forEach(category => {
-        const option = document.createElement('option'); option.value = category; option.textContent = category || 'Not specified'; waiting.append(option);
+      const complete = button('Complete', `Complete follow-up: ${task.title}`, () => {
+        setStatus(task, 'Completed'); if (editingId === task.id) $('#task-status').value = task.status;
+        saveTasks(); render(); $('#followup-feedback').textContent = 'Task marked completed.'; $('#followups-title').focus();
       });
-      waiting.value = task.waitingOn;
-      waiting.addEventListener('change', () => {
-        task.waitingOn = waiting.value;
-        if (editingId === task.id) $('#task-waiting-on').value = task.waitingOn;
-        saveTasks(); render();
-        document.getElementById(waiting.id)?.focus();
-        $('#followup-feedback').textContent = 'Waiting-on category saved.';
-      });
-      waitingLabel.append(waiting);
-      const complete = document.createElement('button');
-      complete.type = 'button'; complete.textContent = 'Complete';
-      complete.setAttribute('aria-label', `Complete follow-up: ${task.title}`);
-      complete.addEventListener('click', () => {
-        setStatus(task, 'Completed');
-        if (editingId === task.id) $('#task-status').value = task.status;
-        saveTasks(); render();
-        $('#followup-feedback').textContent = 'Follow-up and its workload task marked completed.';
-        $('#followups-title').focus();
-      });
-      controls.append(dateForm, waitingLabel, complete);
-      row.append(details, controls); list.append(row);
+      const edit = button('Edit task', `Edit follow-up task: ${task.title}`, () => editTask(task));
+      controls.append(form, complete, edit); row.append(controls); list.append(row);
     });
-    if (!records.length) {
-      const empty = document.createElement('li'); empty.className = 'muted'; empty.textContent = 'No follow-ups in this group.'; list.append(empty);
-    }
+    if (!records.length) { const empty = document.createElement('li'); empty.className = 'muted'; empty.textContent = 'No follow-ups in this group.'; list.append(empty); }
   });
 }
+$('#claim-form').addEventListener('submit', event => {
+  event.preventDefault();
+  const reference = $('#claim-reference').value.trim(); const renaming = !!editingClaimId;
+  if (!reference || !$('#claim-approval').checked) return;
+  if (claims.some(c => c.id !== editingClaimId && c.reference.toLocaleLowerCase() === reference.toLocaleLowerCase())) { $('#claim-feedback').textContent = 'A claim with this label already exists.'; return; }
+  if (editingClaimId) claims.find(c => c.id === editingClaimId).reference = reference;
+  else {
+    if (claims.length >= WORKSPACE_LIMITS.claims) { $('#claim-feedback').textContent = 'Claim limit reached (200).'; return; }
+    const claim = { id: crypto.randomUUID(), reference, status: 'Open' }; claims.push(claim); expandedClaims.add(claim.id);
+    $('#claim-filter').value = 'Open'; renderClaimOptions(); resetEditor(claim.id);
+    $('#task-form').hidden = false;
+  }
+  saveTasks(); resetClaimEditor(); render(); $('#task-feedback').textContent = ''; $('#claim-feedback').textContent = renaming ? 'Claim label updated.' : 'Claim created. Add tasks below.';
+});
+$('#cancel-claim-edit').addEventListener('click', resetClaimEditor);
 $('#task-form').addEventListener('submit', event => {
   event.preventDefault();
-  const titleInput = $('#task-title');
-  const title = titleInput.value.trim();
-  const date = $('#task-date').value;
-  titleInput.setCustomValidity(title ? '' : 'Enter a generic task title.');
-  if (!title) { titleInput.reportValidity(); return; }
-  if (!validDate(date)) { $('#task-date').focus(); return; }
-  const existing = editingId ? tasks.find(t => t.id === editingId) : null;
-  if (!existing && tasks.length >= MAX_TASKS) { $('#task-feedback').textContent = 'Task limit reached (500). Delete old tasks before adding more.'; return; }
+  const title = $('#task-title').value.trim(), date = $('#task-date').value, followUpDate = $('#task-followup-date').value;
+  $('#task-title').setCustomValidity(title ? '' : 'Enter a generic task title.'); if (!title) { $('#task-title').reportValidity(); return; }
+  const claim = claims.find(c => c.id === $('#task-claim').value);
+  if (!claim || claim.status === 'Closed') { $('#task-feedback').textContent = 'Choose an open claim, or reopen this claim first.'; return; }
+  const existing = tasks.find(t => t.id === editingId);
+  if ((!date && (!existing || existing.date)) || !validDate(date) || !validDate(followUpDate)) { $('#task-date').reportValidity(); return; }
+  if (!existing && tasks.length >= WORKSPACE_LIMITS.tasks) { $('#task-feedback').textContent = 'Task limit reached (500).'; return; }
   const task = existing || { id: crypto.randomUUID(), done: false, completedOn: '' };
-  Object.assign(task, { title, date, category: $('#task-category').value,
-    priority: $('#task-priority').value, waitingOn: $('#task-waiting-on').value, nextAction: $('#task-next-action').value.trim() });
-  setStatus(task, $('#task-status').value);
-  if (!existing) tasks.push(task);
-  saveTasks(); resetEditor(); render();
-  $('#task-feedback').textContent = existing ? 'Task updated.' : 'Task added. If hidden, check your search and filters.';
-  titleInput.focus();
+  Object.assign(task, { claimId: claim.id, title, date, followUpDate, description: $('#task-description').value.trim(),
+    category: $('#task-category').value, priority: $('#task-priority').value, waitingOn: $('#task-waiting-on').value, nextAction: $('#task-next-action').value.trim() });
+  setStatus(task, $('#task-status').value); if (!existing) tasks.push(task);
+  expandedClaims.add(claim.id); saveTasks(); resetEditor(claim.id); $('#task-date').required = true; render();
+  $('#task-feedback').textContent = existing ? 'Task updated.' : 'Task added.'; $('#task-title').focus();
 });
 $('#task-title').addEventListener('input', () => $('#task-title').setCustomValidity(''));
-$('#cancel-edit').addEventListener('click', () => {
-  resetEditor(); $('#task-feedback').textContent = 'Edit cancelled.'; $('#task-title').focus();
-});
-['#priority-filter', '#status-filter'].forEach(selector => $(selector).addEventListener('change', () => {
-  // A selected status should not silently conflict with an Open/Due shortcut.
+$('#cancel-edit').addEventListener('click', () => { resetEditor(); $('#task-form').hidden = true; });
+$('#claim-filter').addEventListener('change', () => render({ followups: false }));
+for (const selector of ['#priority-filter', '#status-filter']) $(selector).addEventListener('change', () => {
   if (selector === '#status-filter' && $('#status-filter').value) {
-    filter = 'all';
-    document.querySelectorAll('[data-filter]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.filter === 'all')));
+    filter = 'all'; document.querySelectorAll('[data-filter]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.filter === 'all')));
   }
   render({ followups: false });
-}));
+});
 $('#task-search').addEventListener('input', () => render({ followups: false }));
-document.querySelectorAll('[data-filter]').forEach(button => button.addEventListener('click', () => {
-  filter = button.dataset.filter;
-  $('#status-filter').value = '';
-  document.querySelectorAll('[data-filter]').forEach(b => b.setAttribute('aria-pressed', String(b === button)));
-  render({ followups: false });
+document.querySelectorAll('[data-filter]').forEach(b => b.addEventListener('click', () => {
+  filter = b.dataset.filter; $('#status-filter').value = '';
+  document.querySelectorAll('[data-filter]').forEach(other => other.setAttribute('aria-pressed', String(b === other))); render({ followups: false });
 }));
 $('#clear-data').addEventListener('click', () => {
-  if (!confirm('Delete all tasks saved by Claims Companion in this browser? This cannot be undone.')) return;
+  if (!confirm('Delete all claims and their tasks from this browser? Export a backup first. This cannot be undone.')) return;
   try {
-    localStorage.removeItem(STORAGE_KEY);
-    tasks = []; persistenceEnabled = true; resetEditor();
-    $('#task-feedback').textContent = '';
-    $('#followup-feedback').textContent = '';
-    $('#storage-status').textContent = 'All saved tasks deleted.';
-    render();
-  } catch { $('#storage-status').textContent = 'Saved tasks could not be deleted. Use your browser’s site-data settings to remove them.'; }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ version: 2, claims: [], tasks: [] }));
+    claims = []; tasks = []; expandedClaims.clear(); persistenceEnabled = true; resetEditor(); resetClaimEditor(); render();
+    $('#claim-feedback').textContent = ''; $('#task-feedback').textContent = ''; $('#followup-feedback').textContent = '';
+    try { localStorage.removeItem(LEGACY_STORAGE_KEY); $('#storage-status').textContent = 'All saved claims and tasks deleted. Template preferences are unchanged.'; }
+    catch { $('#storage-status').textContent = 'Current work cleared, but the older recovery copy could not be removed. Check browser storage settings.'; }
+  } catch { $('#storage-status').textContent = 'Saved work could not be cleared. Existing work is unchanged.'; }
 });
-// Use one editing tab per browser profile to avoid overwriting another tab’s work.
 window.addEventListener('storage', event => {
-  if (event.key === STORAGE_KEY || event.key === null) {
-    $('#storage-status').textContent = 'Saved tasks changed in another tab. Reload before editing; this tab will not overwrite them.';
-    persistenceEnabled = false;
-  }
+  if (event.key === STORAGE_KEY || event.key === null) { persistenceEnabled = false; $('#storage-status').textContent = 'Work changed in another tab. Changes here are temporary; reload before editing.'; }
 });
-// Returning from a date picker or another window must not discard pending date edits.
 let renderedDay = today();
-function refreshCalendar() {
-  if (today() !== renderedDay) { renderedDay = today(); render(); }
-}
-window.addEventListener('focus', refreshCalendar);
-setInterval(refreshCalendar, 60000);
-loadTasks(); render();
-
+function refreshCalendar() { if (renderedDay !== today()) { renderedDay = today(); render(); } }
+window.addEventListener('focus', refreshCalendar); setInterval(refreshCalendar, 60000);
 $('#export-tasks').addEventListener('click', () => {
-  const backup = { app: 'claims-companion', version: 1, tasks: tasks.map(normalizeTask) };
-  const url = URL.createObjectURL(new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' }));
-  const link = document.createElement('a');
-  link.href = url; link.download = `claims-companion-tasks-${today()}.json`;
-  document.body.append(link); link.click(); link.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-  $('#backup-status').textContent = `Exported ${tasks.length} tasks. Documentation drafts are not included.`;
+  const url = URL.createObjectURL(new Blob([JSON.stringify({ app: 'claims-companion', ...workspace() }, null, 2)], { type: 'application/json' }));
+  const link = document.createElement('a'); link.href = url; link.download = `claims-companion-workspace-${today()}.json`; document.body.append(link); link.click(); link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000); $('#backup-status').textContent = 'Exported claims and tasks. Template definitions and drafts are not included.';
 });
 $('#import-tasks').addEventListener('change', async event => {
-  const file = event.target.files[0];
-  if (!file) return;
+  const file = event.target.files[0]; if (!file) return;
   try {
-    if (file.size > 1024 * 1024) throw new Error('Backup exceeds the 1 MB size limit.');
-    const backup = JSON.parse(await file.text());
-    if (!backup || backup.app !== 'claims-companion' || backup.version !== 1 || !validTaskList(backup.tasks)) {
-      throw new Error('Invalid backup. Choose a version 1 Claims Companion task export with unique task IDs (maximum 500 tasks).');
-    }
-    if (!persistenceEnabled) throw new Error('Reload or clear unreadable saved tasks before importing. No tasks were changed.');
-    const imported = backup.tasks.map(normalizeTask);
-    if (!confirm(`Replace all ${tasks.length} current tasks with ${imported.length} imported tasks? Export a backup first. This cannot be undone.`)) {
-      $('#backup-status').textContent = 'Import cancelled. No tasks were changed.'; return;
-    }
-    // Persist before replacing in-memory tasks: storage failures leave current tasks intact.
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(imported));
-    tasks = imported; resetEditor();
+    if (file.size > WORKSPACE_LIMITS.fileBytes) throw new Error('Backup exceeds 10 MB.');
+    const imported = readWorkspaceBackup(JSON.parse(await file.text()));
+    if (!persistenceEnabled) throw new Error('Reload or resolve unreadable storage first.');
+    if (!confirm(`Replace all current work with ${imported.claims.length} claims and ${imported.tasks.length} tasks? Export a backup first.`)) { $('#backup-status').textContent = 'Import cancelled. Existing work is unchanged.'; return; }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(imported)); claims = imported.claims; tasks = imported.tasks;
+    expandedClaims.clear(); if (claims[0]) expandedClaims.add(claims[0].id);
+    resetEditor(); resetClaimEditor(); $('#task-form').hidden = true; $('#claim-filter').value = 'All';
     filter = 'all'; $('#priority-filter').value = ''; $('#status-filter').value = ''; $('#task-search').value = '';
     document.querySelectorAll('[data-filter]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.filter === 'all')));
-    $('#storage-status').textContent = ''; $('#task-feedback').textContent = ''; $('#followup-feedback').textContent = '';
-    render();
-    $('#backup-status').textContent = `Imported ${tasks.length} tasks, replacing the previous list. Documentation drafts were not imported.`;
-  } catch (error) {
-    $('#backup-status').textContent = error instanceof SyntaxError ? 'Invalid JSON. No tasks were changed.' : `Import failed: ${error.message} No tasks were changed.`;
-  } finally { event.target.value = ''; }
+    $('#storage-status').textContent = ''; $('#claim-feedback').textContent = ''; $('#task-feedback').textContent = ''; $('#followup-feedback').textContent = ''; render(); $('#backup-status').textContent = 'Claims and tasks imported. Existing work was replaced; template preferences are unchanged.';
+  } catch (error) { $('#backup-status').textContent = `Import failed: ${error instanceof SyntaxError ? 'Invalid JSON.' : error.message} Existing work is unchanged.`; }
+  finally { event.target.value = ''; }
 });
+for (const category of CATEGORIES) { const option = document.createElement('option'); option.textContent = category; $('#task-category').append(option); }
+loadWorkspace(); render();
